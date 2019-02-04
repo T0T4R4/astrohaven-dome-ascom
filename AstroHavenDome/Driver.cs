@@ -64,54 +64,57 @@ namespace ASCOM.AstroHaven
         /// ASCOM DeviceID (COM ProgID) for this driver.
         /// The DeviceID is used by ASCOM applications to load the driver at runtime.
         /// </summary>
-        internal static string driverID = "ASCOM.AstroHaven.Dome";
-        // TODO Change the descriptive string for your driver then remove this line
+        internal static string DriverID = "ASCOM.AstroHaven.Dome";
+
         /// <summary>
         /// Driver description that displays in the ASCOM Chooser.
         /// </summary>
-        private static string driverDescription = "ASCOM Dome Driver for AstroHaven.";
+        private static string _driverDescription = "ASCOM Dome Driver for AstroHaven.";
 
-        internal static string comPortProfileName = "COM Port"; // Constants used for Profile persistence
-        internal static string comPortDefault = "COM1";
-        internal static string traceStateProfileName = "Trace Level";
-        internal static string traceStateDefault = "false";
+        internal const string 
+                PROFILENAME_COMPORT= "COM Port", 
+                PROFILENAME_TRACELEVEL = "Trace Level"
+                ;
 
-        internal static string comPort; // Variables to hold the currrent device configuration
+        internal static string ComPort; // Variables to hold the currrent device configuration
+       
 
-        /// <summary>
-        /// Private variable to hold the connected state
-        /// </summary>
-        private bool connectedState;
+        internal string LastStatus = string.Empty;
 
+        
         /// <summary>
         /// Private variable to hold an ASCOM Utilities object
         /// </summary>
-        private Util utilities;
+        private Util _utils;
 
         /// <summary>
         /// Private variable to hold an ASCOM AstroUtilities object to provide the Range method
         /// </summary>
-        private AstroUtils astroUtilities;
+        private AstroUtils _astroUtils;
+
+        private ArduinoSerial _arduino;
 
         /// <summary>
         /// Variable to hold the trace logger object (creates a diagnostic log file with information that you specify)
         /// </summary>
-        internal static TraceLogger tl;
+        internal static TraceLogger Logger;
 
-        public const string ACTION_GET_STATUS = "GetStatus",
-           ACTION_GET_NORTH_OPEN_PERCENT = "GetNorthOpenPercent",
-           ACTION_GET_SOUTH_OPEN_PERCENT = "GetSouthOpenPercent",
-           ACTION_SET_STEP_VALUE = "SetStepValue",
-           ACTION_OPEN_NORTH = "OpenNorth",
-           ACTION_OPEN_SOUTH = "OpenSouth",
-           ACTION_CLOSE_NORTH = "CloseNorth",
-           ACTION_CLOSE_SOUTH = "CloseSouth"
+        public const string
+            ACTION_GET_STATUS = "ACTION_GET_STATUS",
+
+            ACTION_OPEN_LEFT = "ACTION_OPEN_LEFT",
+            ACTION_OPEN_RIGHT = "ACTION_OPEN_RIGHT",
+
+            ACTION_CLOSE_LEFT = "ACTION_CLOSE_LEFT",
+            ACTION_CLOSE_RIGHT = "ACTION_CLOSE_RIGHT",
+
+            ACTION_OPEN_BOTH = "ACTION_OPEN_BOTH",
+            ACTION_CLOSE_BOTH = "ACTION_CLOSE_BOTH"
+
            ;
 
-        private int northOpenPercent = 0;
-        private int southOpenPercent = 0;
 
-        private int stepValue = 100;
+        public string LOGGER = "Dome";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AstroHaven"/> class.
@@ -119,19 +122,60 @@ namespace ASCOM.AstroHaven
         /// </summary>
         public Dome()
         {
-            tl = new TraceLogger("", "AstroHaven");
+            Logger = new TraceLogger("", "AstroHaven");
             ReadProfile(); // Read device configuration from the ASCOM Profile store
 
-            tl.LogMessage("Dome", "Starting initialisation");
+            Logger.LogMessage(LOGGER, "Starting initialisation");
 
-            connectedState = false; // Initialise connected to false
-            utilities = new Util(); //Initialise util object
-            astroUtilities = new AstroUtils(); // Initialise astro utilities object
+            _IsConnected = false; // Initialise connected to false
+            _utils = new Util(); //Initialise util object
+            _astroUtils = new AstroUtils(); // Initialise astro utilities object
 
             //TODO: Implement your additional construction here
 
-            tl.LogMessage("Dome", "Completed initialisation");
+            Logger.LogMessage(LOGGER, "Completed initialisation");
         }
+
+        #region Serial
+
+        private bool ConnectDome()
+        {
+            bool success = false;
+            try
+            {
+                _arduino = new ArduinoSerial();
+                _arduino.OnReplyReceived += new ArduinoSerial.ReplyReceivedEventHandler(onReplyReceived);
+                _utils.WaitForMilliseconds(2000);
+                success = true;
+            } catch(Exception exc)
+            {
+                Logger.LogIssue(LOGGER, "Failed to connect to dome : " + exc.Message);
+            }
+            return success;
+        }
+
+        private void onReplyReceived(object sender, EventArgs e)
+        {
+            while (_arduino.ReplyQueue.Count > 0)
+            {
+                string[] com_args = ((string)_arduino.ReplyQueue.Pop()).Split(' ');
+
+                string reply = com_args[0];
+
+                // process reply ?;
+                LastStatus = reply;
+            }
+        }
+
+        private bool DisconnectDome()
+        {
+            _arduino.Close();
+
+            return true;
+        }
+
+
+        #endregion
 
 
         //
@@ -150,7 +194,7 @@ namespace ASCOM.AstroHaven
         {
             // consider only showing the setup dialog if not connected
             // or call a different dialog if connected
-            if (IsConnected)
+            if (_IsConnected)
                 System.Windows.Forms.MessageBox.Show("Already connected, just press OK");
 
             using (SetupDialogForm F = new SetupDialogForm())
@@ -170,13 +214,15 @@ namespace ASCOM.AstroHaven
                 //tl.LogMessage("SupportedActions Get", "Returning empty arraylist");
                 var actions = new ArrayList();
                 actions.Add(ACTION_GET_STATUS);
-                actions.Add(ACTION_GET_NORTH_OPEN_PERCENT);
-                actions.Add(ACTION_GET_SOUTH_OPEN_PERCENT);
-                actions.Add(ACTION_SET_STEP_VALUE);
-                actions.Add(ACTION_OPEN_NORTH);
-                actions.Add(ACTION_OPEN_SOUTH);
-                actions.Add(ACTION_CLOSE_NORTH);
-                actions.Add(ACTION_CLOSE_SOUTH);
+
+                actions.Add(ACTION_OPEN_LEFT);
+                actions.Add(ACTION_OPEN_RIGHT);
+
+                actions.Add(ACTION_CLOSE_LEFT);
+                actions.Add(ACTION_CLOSE_RIGHT);
+
+                actions.Add(ACTION_OPEN_BOTH);
+                actions.Add(ACTION_CLOSE_BOTH);
 
                 return actions;
             }
@@ -184,24 +230,30 @@ namespace ASCOM.AstroHaven
 
         public string Action(string actionName, string actionParameters)
         {
-            switch(actionName)
+            switch (actionName)
             {
                 case ACTION_GET_STATUS:
+                    return CommandString(ArduinoSerial.COMMAND_GET_STATUS, false);
+
+                case ACTION_OPEN_LEFT:
+                    CommandBlind(ArduinoSerial.COMMAND_OPEN_LEFT, false);
                     break;
-                case ACTION_GET_NORTH_OPEN_PERCENT:
-                    break;
-                case ACTION_GET_SOUTH_OPEN_PERCENT:
-                    break;
-                case ACTION_SET_STEP_VALUE:
+                case ACTION_OPEN_RIGHT:
+                    CommandBlind(ArduinoSerial.COMMAND_OPEN_RIGHT, false);
                     break;
 
-                case ACTION_OPEN_NORTH:
+                case ACTION_CLOSE_LEFT:
+                    CommandBlind(ArduinoSerial.COMMAND_CLOSE_LEFT, false);
                     break;
-                case ACTION_OPEN_SOUTH:
+                case ACTION_CLOSE_RIGHT:
+                    CommandBlind(ArduinoSerial.COMMAND_CLOSE_RIGHT, false);
                     break;
-                case ACTION_CLOSE_NORTH:
+
+                case ACTION_OPEN_BOTH:
+                    CommandBlind(ArduinoSerial.COMMAND_OPEN_BOTH, false);
                     break;
-                case ACTION_CLOSE_SOUTH:
+                case ACTION_CLOSE_BOTH:
+                    CommandBlind(ArduinoSerial.COMMAND_CLOSE_BOTH, false);
                     break;
 
                 default:
@@ -209,86 +261,113 @@ namespace ASCOM.AstroHaven
                     throw new ASCOM.ActionNotImplementedException("Action " + actionName + " is not implemented by this driver");
 
             }
-           
+
+            return String.Empty;
+
         }
 
         public void CommandBlind(string command, bool raw)
         {
-            CheckConnected("CommandBlind");
-            // Call CommandString and return as soon as it finishes
-            this.CommandString(command, raw);
-            // or
-            throw new ASCOM.MethodNotImplementedException("CommandBlind");
-            // DO NOT have both these sections!  One or the other
+            requiresConnected("CommandBlind");
+
+            _arduino.SendCommand(command);
         }
 
         public bool CommandBool(string command, bool raw)
         {
-            CheckConnected("CommandBool");
-            string ret = CommandString(command, raw);
-            // TODO decode the return string and return true or false
-            // or
             throw new ASCOM.MethodNotImplementedException("CommandBool");
-            // DO NOT have both these sections!  One or the other
         }
 
         public string CommandString(string command, bool raw)
         {
-            CheckConnected("CommandString");
-            // it's a good idea to put all the low level communication with the device here,
-            // then all communication calls this function
-            // you need something to ensure that only one command is in progress at a time
-
             throw new ASCOM.MethodNotImplementedException("CommandString");
         }
 
         public void Dispose()
         {
             // Clean up the tracelogger and util objects
-            tl.Enabled = false;
-            tl.Dispose();
-            tl = null;
-            utilities.Dispose();
-            utilities = null;
-            astroUtilities.Dispose();
-            astroUtilities = null;
+            Logger.Enabled = false;
+            Logger.Dispose();
+            Logger = null;
+            _utils.Dispose();
+            _utils = null;
+            _astroUtils.Dispose();
+            _astroUtils = null;
+
+            // ensure that we disconnect from the serial
+            if ((_arduino != null) && (_arduino.IsOpen))
+            {
+                _arduino.Close();
+                _arduino.Dispose();
+            }
         }
 
+        /// <summary>
+        /// Returns true if there is a valid connection to the driver hardware
+        /// </summary>
+        private bool _IsConnected;
+
+        /// <summary>
+        /// Get : Returns true if connected to hardware
+        /// Set : Forces the connection or disconnection to the hardware
+        /// </summary>
         public bool Connected
         {
             get
             {
-                LogMessage("Connected", "Get {0}", IsConnected);
-                return IsConnected;
+                return _IsConnected;
             }
             set
             {
-                tl.LogMessage("Connected", "Set {0}", value);
-                if (value == IsConnected)
-                    return;
+                if (value == _IsConnected)
+                    return; // doing nothing
 
                 if (value)
                 {
-                    connectedState = true;
-                    LogMessage("Connected Set", "Connecting to port {0}", comPort);
-                    // TODO connect to the device
+                    // Setting to True means we try to connect to the device
+                    //
+
+                    LogMessage(LOGGER, "Connecting to device on port {0}", ComPort);
+
+                    _IsConnected = ConnectDome();
+
+                    if (_IsConnected)
+                        LogMessage(LOGGER, "Successfully connected to port {0}", ComPort);
+                    else
+                        LogMessage(LOGGER, "Failed to connect to port {0}", ComPort);
                 }
                 else
                 {
-                    connectedState = false;
-                    LogMessage("Connected Set", "Disconnecting from port {0}", comPort);
-                    // TODO disconnect from the device
+                    // Setting to False means we try to disconnect from the device
+                    //
+
+                    LogMessage(LOGGER, "Disconnecting from port {0}", ComPort);
+
+                    if (DisconnectDome())
+                        _IsConnected = false;
+
                 }
+            }
+        }
+
+        /// <summary>
+        /// Use this function to throw an exception if we aren't connected to the hardware
+        /// </summary>
+        /// <param name="message"></param>
+        private void requiresConnected(string message)
+        {
+            if (!_IsConnected)
+            {
+                throw new ASCOM.NotConnectedException(message);
             }
         }
 
         public string Description
         {
-            // TODO customise this device description
             get
             {
-                tl.LogMessage("Description Get", driverDescription);
-                return driverDescription;
+                Logger.LogMessage("ASCOM Driver to pilot an AstroHaven Dome", _driverDescription);
+                return _driverDescription;
             }
         }
 
@@ -297,9 +376,8 @@ namespace ASCOM.AstroHaven
             get
             {
                 Version version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-                // TODO customise this driver description
-                string driverInfo = "Information about the driver itself. Version: " + String.Format(CultureInfo.InvariantCulture, "{0}.{1}", version.Major, version.Minor);
-                tl.LogMessage("DriverInfo Get", driverInfo);
+                string driverInfo = "ASCOM Driver for AstroHaven Dome. Version: " + String.Format(CultureInfo.InvariantCulture, "{0}.{1}", version.Major, version.Minor);
+                Logger.LogMessage("DriverInfo Get", driverInfo);
                 return driverInfo;
             }
         }
@@ -310,7 +388,7 @@ namespace ASCOM.AstroHaven
             {
                 Version version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
                 string driverVersion = String.Format(CultureInfo.InvariantCulture, "{0}.{1}", version.Major, version.Minor);
-                tl.LogMessage("DriverVersion Get", driverVersion);
+                Logger.LogMessage("DriverVersion Get", driverVersion);
                 return driverVersion;
             }
         }
@@ -329,8 +407,8 @@ namespace ASCOM.AstroHaven
         {
             get
             {
-                string name = "Short driver name - please customise";
-                tl.LogMessage("Name Get", name);
+                string name = "AstroHaven Dome Driver";
+                Logger.LogMessage("Name Get", name);
                 return name;
             }
         }
@@ -339,19 +417,18 @@ namespace ASCOM.AstroHaven
 
         #region IDome Implementation
 
-        private bool domeShutterState = false; // Variable to hold the open/closed status of the shutter, true = Open
 
         public void AbortSlew()
         {
             // This is a mandatory parameter but we have no action to take in this simple driver
-            tl.LogMessage("AbortSlew", "Completed");
+            Logger.LogMessage("AbortSlew", "Completed");
         }
 
         public double Altitude
         {
             get
             {
-                tl.LogMessage("Altitude Get", "Not implemented");
+                Logger.LogMessage("Altitude Get", "Not implemented");
                 throw new ASCOM.PropertyNotImplementedException("Altitude", false);
             }
         }
@@ -360,7 +437,7 @@ namespace ASCOM.AstroHaven
         {
             get
             {
-                tl.LogMessage("AtHome Get", "Not implemented");
+                Logger.LogMessage("AtHome Get", "Not implemented");
                 throw new ASCOM.PropertyNotImplementedException("AtHome", false);
             }
         }
@@ -369,7 +446,7 @@ namespace ASCOM.AstroHaven
         {
             get
             {
-                tl.LogMessage("AtPark Get", "Not implemented");
+                Logger.LogMessage("AtPark Get", "Not implemented");
                 throw new ASCOM.PropertyNotImplementedException("AtPark", false);
             }
         }
@@ -378,7 +455,7 @@ namespace ASCOM.AstroHaven
         {
             get
             {
-                tl.LogMessage("Azimuth Get", "Not implemented");
+                Logger.LogMessage("Azimuth Get", "Not implemented");
                 throw new ASCOM.PropertyNotImplementedException("Azimuth", false);
             }
         }
@@ -387,7 +464,7 @@ namespace ASCOM.AstroHaven
         {
             get
             {
-                tl.LogMessage("CanFindHome Get", false.ToString());
+                Logger.LogMessage("CanFindHome Get", false.ToString());
                 return false;
             }
         }
@@ -396,7 +473,7 @@ namespace ASCOM.AstroHaven
         {
             get
             {
-                tl.LogMessage("CanPark Get", false.ToString());
+                Logger.LogMessage("CanPark Get", false.ToString());
                 return false;
             }
         }
@@ -405,7 +482,7 @@ namespace ASCOM.AstroHaven
         {
             get
             {
-                tl.LogMessage("CanSetAltitude Get", false.ToString());
+                Logger.LogMessage("CanSetAltitude Get", false.ToString());
                 return false;
             }
         }
@@ -414,7 +491,7 @@ namespace ASCOM.AstroHaven
         {
             get
             {
-                tl.LogMessage("CanSetAzimuth Get", false.ToString());
+                Logger.LogMessage("CanSetAzimuth Get", false.ToString());
                 return false;
             }
         }
@@ -423,7 +500,7 @@ namespace ASCOM.AstroHaven
         {
             get
             {
-                tl.LogMessage("CanSetPark Get", false.ToString());
+                Logger.LogMessage("CanSetPark Get", false.ToString());
                 return false;
             }
         }
@@ -432,8 +509,8 @@ namespace ASCOM.AstroHaven
         {
             get
             {
-                tl.LogMessage("CanSetShutter Get", true.ToString());
-                return true;
+                Logger.LogMessage("CanSetShutter Get", true.ToString());
+                return false;
             }
         }
 
@@ -441,7 +518,7 @@ namespace ASCOM.AstroHaven
         {
             get
             {
-                tl.LogMessage("CanSlave Get", false.ToString());
+                Logger.LogMessage("CanSlave Get", false.ToString());
                 return false;
             }
         }
@@ -450,38 +527,47 @@ namespace ASCOM.AstroHaven
         {
             get
             {
-                tl.LogMessage("CanSyncAzimuth Get", false.ToString());
+                Logger.LogMessage("CanSyncAzimuth Get", false.ToString());
                 return false;
             }
         }
 
         public void CloseShutter()
         {
-            tl.LogMessage("CloseShutter", "Shutter has been closed");
-            domeShutterState = false;
+            Logger.LogMessage("CloseShutter", "Closing shutters...");
+            Action(ACTION_CLOSE_BOTH, null);
+            //if (result == ArduinoSerial.STATUS_BOTH_CLOSED)
+            //    Logger.LogMessage("CloseShutter", "Shutter has been closed");
+            //else
+            //    Logger.LogMessage("CloseShutter", "Somewhat they are not both closed : "  + result);
         }
 
         public void FindHome()
         {
-            tl.LogMessage("FindHome", "Not implemented");
+            Logger.LogMessage("FindHome", "Not implemented");
             throw new ASCOM.MethodNotImplementedException("FindHome");
         }
 
         public void OpenShutter()
         {
-            tl.LogMessage("OpenShutter", "Shutter has been opened");
-            domeShutterState = true;
+            Logger.LogMessage("OpenShutter", "Opening shutters...");
+            Action(ACTION_OPEN_BOTH, null);
+            //var result = Action(ACTION_OPEN_BOTH, null);
+            //if (result == ArduinoSerial.STATUS_BOTH_OPEN)
+            //    Logger.LogMessage("OpenShutter", "Both shutter are open");
+            //else
+            //    Logger.LogMessage("OpenShutter", "Somewhat shutters are not both open : " + result);
         }
 
         public void Park()
         {
-            tl.LogMessage("Park", "Not implemented");
+            Logger.LogMessage("Park", "Not implemented");
             throw new ASCOM.MethodNotImplementedException("Park");
         }
 
         public void SetPark()
         {
-            tl.LogMessage("SetPark", "Not implemented");
+            Logger.LogMessage("SetPark", "Not implemented");
             throw new ASCOM.MethodNotImplementedException("SetPark");
         }
 
@@ -489,17 +575,13 @@ namespace ASCOM.AstroHaven
         {
             get
             {
-                tl.LogMessage("ShutterStatus Get", false.ToString());
-                if (domeShutterState)
-                {
-                    tl.LogMessage("ShutterStatus", ShutterState.shutterOpen.ToString());
+                // returns last received status
+                if (LastStatus == ArduinoSerial.STATUS_BOTH_OPEN)
                     return ShutterState.shutterOpen;
-                }
-                else
-                {
-                    tl.LogMessage("ShutterStatus", ShutterState.shutterClosed.ToString());
+                else if (LastStatus == ArduinoSerial.STATUS_BOTH_CLOSED)
                     return ShutterState.shutterClosed;
-                }
+                else
+                    return ShutterState.shutterOpening; // in-between state??
             }
         }
 
@@ -507,25 +589,25 @@ namespace ASCOM.AstroHaven
         {
             get
             {
-                tl.LogMessage("Slaved Get", false.ToString());
+                Logger.LogMessage("Slaved Get", false.ToString());
                 return false;
             }
             set
             {
-                tl.LogMessage("Slaved Set", "not implemented");
+                Logger.LogMessage("Slaved Set", "not implemented");
                 throw new ASCOM.PropertyNotImplementedException("Slaved", true);
             }
         }
 
         public void SlewToAltitude(double Altitude)
         {
-            tl.LogMessage("SlewToAltitude", "Not implemented");
+            Logger.LogMessage("SlewToAltitude", "Not implemented");
             throw new ASCOM.MethodNotImplementedException("SlewToAltitude");
         }
 
         public void SlewToAzimuth(double Azimuth)
         {
-            tl.LogMessage("SlewToAzimuth", "Not implemented");
+            Logger.LogMessage("SlewToAzimuth", "Not implemented");
             throw new ASCOM.MethodNotImplementedException("SlewToAzimuth");
         }
 
@@ -533,45 +615,39 @@ namespace ASCOM.AstroHaven
         {
             get
             {
-                tl.LogMessage("Slewing Get", false.ToString());
+                Logger.LogMessage("Slewing Get", false.ToString());
                 return false;
             }
         }
 
         public void SyncToAzimuth(double Azimuth)
         {
-            tl.LogMessage("SyncToAzimuth", "Not implemented");
+            Logger.LogMessage("SyncToAzimuth", "Not implemented");
             throw new ASCOM.MethodNotImplementedException("SyncToAzimuth");
         }
 
         #endregion
 
-        #region Private properties and methods
-        // here are some useful properties and methods that can be used as required
-        // to help with driver development
 
         #region ASCOM Registration
 
-        // Register or unregister driver for ASCOM. This is harmless if already
-        // registered or unregistered. 
-        //
         /// <summary>
         /// Register or unregister the driver with the ASCOM Platform.
         /// This is harmless if the driver is already registered/unregistered.
         /// </summary>
         /// <param name="bRegister">If <c>true</c>, registers the driver, otherwise unregisters it.</param>
-        private static void RegUnregASCOM(bool bRegister)
+        private static void regUnregASCOM(bool bRegister)
         {
             using (var P = new ASCOM.Utilities.Profile())
             {
                 P.DeviceType = "Dome";
                 if (bRegister)
                 {
-                    P.Register(driverID, driverDescription);
+                    P.Register(DriverID, _driverDescription);
                 }
                 else
                 {
-                    P.Unregister(driverID);
+                    P.Unregister(DriverID);
                 }
             }
         }
@@ -596,7 +672,7 @@ namespace ASCOM.AstroHaven
         [ComRegisterFunction]
         public static void RegisterASCOM(Type t)
         {
-            RegUnregASCOM(true);
+            regUnregASCOM(true);
         }
 
         /// <summary>
@@ -619,34 +695,13 @@ namespace ASCOM.AstroHaven
         [ComUnregisterFunction]
         public static void UnregisterASCOM(Type t)
         {
-            RegUnregASCOM(false);
+            regUnregASCOM(false);
         }
 
         #endregion
 
-        /// <summary>
-        /// Returns true if there is a valid connection to the driver hardware
-        /// </summary>
-        private bool IsConnected
-        {
-            get
-            {
-                // TODO check that the driver hardware connection exists and is connected to the hardware
-                return connectedState;
-            }
-        }
 
-        /// <summary>
-        /// Use this function to throw an exception if we aren't connected to the hardware
-        /// </summary>
-        /// <param name="message"></param>
-        private void CheckConnected(string message)
-        {
-            if (!IsConnected)
-            {
-                throw new ASCOM.NotConnectedException(message);
-            }
-        }
+        #region Profile management
 
         /// <summary>
         /// Read the device configuration from the ASCOM Profile store
@@ -655,9 +710,10 @@ namespace ASCOM.AstroHaven
         {
             using (Profile driverProfile = new Profile())
             {
-                driverProfile.DeviceType = "Dome";
-                tl.Enabled = Convert.ToBoolean(driverProfile.GetValue(driverID, traceStateProfileName, string.Empty, traceStateDefault));
-                comPort = driverProfile.GetValue(driverID, comPortProfileName, string.Empty, comPortDefault);
+                driverProfile.DeviceType = LOGGER;
+                var val = driverProfile.GetValue(DriverID, PROFILENAME_TRACELEVEL, string.Empty, "DEBUG");
+                Logger.Enabled = Convert.ToBoolean(val);
+                ComPort = driverProfile.GetValue(DriverID, PROFILENAME_COMPORT, string.Empty, ArduinoSerial.DEFAULT_COMPORT);
             }
         }
 
@@ -668,11 +724,13 @@ namespace ASCOM.AstroHaven
         {
             using (Profile driverProfile = new Profile())
             {
-                driverProfile.DeviceType = "Dome";
-                driverProfile.WriteValue(driverID, traceStateProfileName, tl.Enabled.ToString());
-                driverProfile.WriteValue(driverID, comPortProfileName, comPort.ToString());
+                driverProfile.DeviceType = LOGGER;
+                driverProfile.WriteValue(DriverID, PROFILENAME_TRACELEVEL, Logger.Enabled.ToString());
+                driverProfile.WriteValue(DriverID, PROFILENAME_COMPORT, ComPort.ToString());
             }
         }
+
+        #endregion
 
         /// <summary>
         /// Log helper function that takes formatted strings and arguments
@@ -683,8 +741,8 @@ namespace ASCOM.AstroHaven
         internal static void LogMessage(string identifier, string message, params object[] args)
         {
             var msg = string.Format(message, args);
-            tl.LogMessage(identifier, msg);
+            Logger.LogMessage(identifier, msg);
         }
-        #endregion
+        
     }
 }
