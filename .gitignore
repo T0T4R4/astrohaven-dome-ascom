@@ -1,3 +1,5 @@
 .vs/
 AstroHavenDome/obj/
 AstroHavenDome/bin/
+Tests/obj/
+Tests/bin/
