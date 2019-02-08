@@ -73,7 +73,7 @@ namespace ASCOM.AstroHaven
 
         internal const string 
                 PROFILENAME_COMPORT= "COM Port", 
-                PROFILENAME_TRACELEVEL = "Trace Level"
+                PROFILENAME_ENABLELOGGING = "Trace Level"
                 ;
 
         internal static string ComPort; // Variables to hold the currrent device configuration
@@ -81,7 +81,6 @@ namespace ASCOM.AstroHaven
 
         internal string LastStatus = string.Empty;
 
-        
         /// <summary>
         /// Private variable to hold an ASCOM Utilities object
         /// </summary>
@@ -97,10 +96,24 @@ namespace ASCOM.AstroHaven
         /// <summary>
         /// Variable to hold the trace logger object (creates a diagnostic log file with information that you specify)
         /// </summary>
-        internal static TraceLogger Logger;
+        //public static bool _Lock = true;
 
-        public const string
+        private static TraceLogger _Logger = null;
+        internal static TraceLogger Logger
+        {
+            get
+            {
+                //lock (_Lock)
+                {
+                    if (_Logger == null) _Logger = new TraceLogger(string.Empty, "AstroHaven");
+                }
+                return _Logger;
+            }
+        }
+
+        internal const string
             ACTION_GET_STATUS = "ACTION_GET_STATUS",
+            ACTION_LASTSTATUS = "ACTION_LAST_STATUS",
 
             ACTION_OPEN_LEFT = "ACTION_OPEN_LEFT",
             ACTION_OPEN_RIGHT = "ACTION_OPEN_RIGHT",
@@ -110,7 +123,6 @@ namespace ASCOM.AstroHaven
 
             ACTION_OPEN_BOTH = "ACTION_OPEN_BOTH",
             ACTION_CLOSE_BOTH = "ACTION_CLOSE_BOTH"
-
            ;
 
 
@@ -122,7 +134,6 @@ namespace ASCOM.AstroHaven
         /// </summary>
         public Dome()
         {
-            Logger = new TraceLogger("", "AstroHaven");
             ReadProfile(); // Read device configuration from the ASCOM Profile store
 
             Logger.LogMessage(LOGGER, "Starting initialisation");
@@ -143,9 +154,10 @@ namespace ASCOM.AstroHaven
             bool success = false;
             try
             {
-                _arduino = new ArduinoSerial();
+                _arduino = new ArduinoSerial(Dome.ComPort, 9600);
                 _arduino.OnReplyReceived += new ArduinoSerial.ReplyReceivedEventHandler(onReplyReceived);
                 _utils.WaitForMilliseconds(2000);
+
                 success = true;
             } catch(Exception exc)
             {
@@ -156,15 +168,7 @@ namespace ASCOM.AstroHaven
 
         private void onReplyReceived(object sender, EventArgs e)
         {
-            while (_arduino.ReplyQueue.Count > 0)
-            {
-                string[] com_args = ((string)_arduino.ReplyQueue.Pop()).Split(' ');
-
-                string reply = com_args[0];
-
-                // process reply ?;
-                LastStatus = reply;
-            }
+            LastStatus = String.IsNullOrEmpty(_arduino.LastReceivedChar) ? "?" : _arduino.LastReceivedChar;
         }
 
         private bool DisconnectDome()
@@ -214,6 +218,7 @@ namespace ASCOM.AstroHaven
                 //tl.LogMessage("SupportedActions Get", "Returning empty arraylist");
                 var actions = new ArrayList();
                 actions.Add(ACTION_GET_STATUS);
+                actions.Add(ACTION_LASTSTATUS);
 
                 actions.Add(ACTION_OPEN_LEFT);
                 actions.Add(ACTION_OPEN_RIGHT);
@@ -233,7 +238,16 @@ namespace ASCOM.AstroHaven
             switch (actionName)
             {
                 case ACTION_GET_STATUS:
-                    return CommandString(ArduinoSerial.COMMAND_GET_STATUS, false);
+                    //return CommandString(ArduinoSerial.COMMAND_GET_STATUS, false);
+                    CommandBlind(ArduinoSerial.COMMAND_GET_STATUS, false);
+                    //System.Threading.Thread.Sleep(250);
+                    return LastStatus;
+
+                case ACTION_LASTSTATUS:
+                    if (String.IsNullOrEmpty(LastStatus))
+                        return Action(ACTION_GET_STATUS, string.Empty);
+                    else
+                        return LastStatus;
 
                 case ACTION_OPEN_LEFT:
                     CommandBlind(ArduinoSerial.COMMAND_OPEN_LEFT, false);
@@ -257,7 +271,7 @@ namespace ASCOM.AstroHaven
                     break;
 
                 default:
-                    LogMessage("", "Action {0}, parameters {1} not implemented", actionName, actionParameters);
+                    LogMessage(string.Empty, "Action {0}, parameters {1} not implemented", actionName, actionParameters);
                     throw new ASCOM.ActionNotImplementedException("Action " + actionName + " is not implemented by this driver");
 
             }
@@ -270,7 +284,8 @@ namespace ASCOM.AstroHaven
         {
             requiresConnected("CommandBlind");
 
-            _arduino.SendCommand(command);
+            if (_arduino != null)
+                _arduino.SendCommand(command);
         }
 
         public bool CommandBool(string command, bool raw)
@@ -281,14 +296,22 @@ namespace ASCOM.AstroHaven
         public string CommandString(string command, bool raw)
         {
             throw new ASCOM.MethodNotImplementedException("CommandString");
+
+            //requiresConnected("CommandString");
+
+            //if (_arduino != null)
+            //    return _arduino.SendCommand(command, true);
+
+            //return null;
         }
 
         public void Dispose()
         {
             // Clean up the tracelogger and util objects
-            Logger.Enabled = false;
-            Logger.Dispose();
-            Logger = null;
+            _Logger.Enabled = false;
+            _Logger.Dispose();
+            _Logger = null;
+
             _utils.Dispose();
             _utils = null;
             _astroUtils.Dispose();
@@ -535,7 +558,7 @@ namespace ASCOM.AstroHaven
         public void CloseShutter()
         {
             Logger.LogMessage("CloseShutter", "Closing shutters...");
-            Action(ACTION_CLOSE_BOTH, null);
+            Action(ACTION_CLOSE_BOTH, string.Empty);
             //if (result == ArduinoSerial.STATUS_BOTH_CLOSED)
             //    Logger.LogMessage("CloseShutter", "Shutter has been closed");
             //else
@@ -551,8 +574,8 @@ namespace ASCOM.AstroHaven
         public void OpenShutter()
         {
             Logger.LogMessage("OpenShutter", "Opening shutters...");
-            Action(ACTION_OPEN_BOTH, null);
-            //var result = Action(ACTION_OPEN_BOTH, null);
+            Action(ACTION_OPEN_BOTH, string.Empty);
+            //var result = Action(ACTION_OPEN_BOTH, string.Empty);
             //if (result == ArduinoSerial.STATUS_BOTH_OPEN)
             //    Logger.LogMessage("OpenShutter", "Both shutter are open");
             //else
@@ -711,7 +734,7 @@ namespace ASCOM.AstroHaven
             using (Profile driverProfile = new Profile())
             {
                 driverProfile.DeviceType = LOGGER;
-                var val = driverProfile.GetValue(DriverID, PROFILENAME_TRACELEVEL, string.Empty, "DEBUG");
+                var val = driverProfile.GetValue(DriverID, PROFILENAME_ENABLELOGGING, string.Empty, true.ToString() );
                 Logger.Enabled = Convert.ToBoolean(val);
                 ComPort = driverProfile.GetValue(DriverID, PROFILENAME_COMPORT, string.Empty, ArduinoSerial.DEFAULT_COMPORT);
             }
@@ -722,10 +745,13 @@ namespace ASCOM.AstroHaven
         /// </summary>
         internal void WriteProfile()
         {
+            if (String.IsNullOrEmpty(ComPort))
+                return;
+
             using (Profile driverProfile = new Profile())
             {
                 driverProfile.DeviceType = LOGGER;
-                driverProfile.WriteValue(DriverID, PROFILENAME_TRACELEVEL, Logger.Enabled.ToString());
+                driverProfile.WriteValue(DriverID, PROFILENAME_ENABLELOGGING, Logger.Enabled.ToString());
                 driverProfile.WriteValue(DriverID, PROFILENAME_COMPORT, ComPort.ToString());
             }
         }

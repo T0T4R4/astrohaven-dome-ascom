@@ -32,9 +32,16 @@ namespace ASCOM.AstroHaven
             STATUS_BOTH_CLOSED = "0",
             STATUS_RIGHT_CLOSED = "1",
             STATUS_LEFT_CLOSED = "2",
-            STATUS_BOTH_OPEN = "3";
+            STATUS_BOTH_OPEN = "3",
 
-        internal ArduinoSerial(String comPort, StopBits stopBits, int baud, bool autostart)
+            RESPONSE_LEFT_ALREADY_CLOSED = "X",
+            RESPONSE_LEFT_ALREADY_OPEN = "x",
+            RESPONSE_RIGHT_ALREADY_CLOSED = "Y",
+            RESPONSE_RIGHT_ALREADY_OPEN = "y";
+
+        public string LastReceivedChar { get; private set; }
+
+        internal ArduinoSerial(String comPort, int baud, bool autostart, StopBits stopBits)
         {
             this.Parity = Parity.None;
             this.PortName = comPort;
@@ -46,29 +53,57 @@ namespace ASCOM.AstroHaven
             if (autostart)
                 this.Open();
         }
+        internal ArduinoSerial(String comPort, int baud) : this(comPort, baud, true, StopBits.One) { }
+        internal ArduinoSerial() : this(DEFAULT_COMPORT, 9600, true, StopBits.One) { }
 
         private void ArduinoSerial_ErrorReceived(object sender, SerialErrorReceivedEventArgs e)
         {
             Dome.Logger.LogIssue("Arduino", e.EventType.ToString());
         }
 
-        internal ArduinoSerial() : this(DEFAULT_COMPORT, StopBits.One, 9600, true) { }
-
         private void ArduinoSerial_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
-            ReplyQueue.Push(this.ReadLine().Trim("\r".ToCharArray())); // Push latest command onto the stack
-            OnReplyReceived(this, e);
+            try
+            {
+                if (!this.IsOpen) return;
+
+                var chars = this.ReadExisting().Trim("\r\n".ToCharArray());
+
+                if ((!string.IsNullOrEmpty(chars) && chars.Length > 0))
+                    LastReceivedChar = chars[0].ToString();
+                else
+                    LastReceivedChar = null;
+
+                OnReplyReceived(this, e);
+            }
+            catch (IOException)
+            {
+                // happens when we disconnect (thread killed ?)
+            }
         }
 
-        internal void SendCommand(string command)
+
+        internal string SendCommand(string command, bool waitForResponse = false)
         {
+            if (!this.IsOpen) return null;
+
             this.Write(command);
+
+            //if (waitForResponse)
+            //    return this.this.ReadLine();
+
+            return null;
+
+
         }
 
         internal void ResetConnection()
         {
-            this.Close();
-            _utils.WaitForMilliseconds(1000);
+            if (this.IsOpen)
+            {
+                this.Close();
+                _utils.WaitForMilliseconds(1000);
+            }
 
             this.Open();
             _utils.WaitForMilliseconds(3000);

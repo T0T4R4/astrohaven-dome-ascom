@@ -97,15 +97,19 @@ void parseCommand(char s) {
     } 
     else if (s == 'O'){ 
         // Fully open both shutters
-        delay(10000); // 10 seconds approx. to open both
-        rightShutterOpenPerc = 100;
-        leftShutterOpenPerc = 100;
+        if ((rightShutterOpenPerc < 100) || (leftShutterOpenPerc < 100)) {
+          delay(10000); // 10 seconds approx. to open both
+          rightShutterOpenPerc = 100;
+          leftShutterOpenPerc = 100;
+        }
     } 
     else if (s == 'C'){ 
         // Fully close both shutters
-        delay(10000); // 10 seconds approx. to open both
-        rightShutterOpenPerc = 0;
-        leftShutterOpenPerc = 0;
+        if ((rightShutterOpenPerc > 0) || (leftShutterOpenPerc > 0)) {
+          delay(10000); // 10 seconds approx. to open both
+          rightShutterOpenPerc = 0;
+          leftShutterOpenPerc = 0;
+        }
     } 
     else if (s == 'R'){ 
         // Reset the BG controller after the BG switch has been bumped

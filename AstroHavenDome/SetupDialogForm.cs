@@ -26,7 +26,6 @@ namespace ASCOM.AstroHaven
             // Initialise current values of user settings from the ASCOM Profile
             InitUI();
 
-            UpdateUIWhenConnected(false);
         }
 
         private void BrowseToAscom(object sender, EventArgs e) // Click on ASCOM logo event handler
@@ -57,10 +56,7 @@ namespace ASCOM.AstroHaven
             {
                 comboBoxComPort.SelectedItem = Dome.ComPort;
             }
-
         }
-
-        #region UI
 
 
         private void btOK_Click(object sender, EventArgs e) // OK button event handler
@@ -76,144 +72,5 @@ namespace ASCOM.AstroHaven
             Close();
         }
 
-        private void btOpenLeft_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                _dome.Action(Dome.ACTION_OPEN_LEFT, null);
-            }
-            catch (Exception exc)
-            {
-                Log(exc);
-            }
-        }
-
-        private void btCloseLeft_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                _dome.Action(Dome.ACTION_CLOSE_LEFT, null);
-            }
-            catch (Exception exc)
-            {
-                Log(exc);
-            }
-        }
-
-        private void btOpenRight_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                _dome.Action(Dome.ACTION_CLOSE_RIGHT, null);
-            }
-            catch (Exception exc)
-            {
-                Log(exc);
-            }
-        }
-
-        private void btCloseRight_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                _dome.Action(Dome.ACTION_CLOSE_RIGHT, null);
-            }
-            catch (Exception exc)
-            {
-                Log(exc);
-            }
-        }
-
-
-        private void btOpenBoth_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                //_dome.Action(Dome.ACTION_OPEN_BOTH, null);
-                //or
-                _dome.OpenShutter();
-            }
-            catch (Exception exc)
-            {
-                Log(exc);
-            }
-        }
-
-        private void btCloseBoth_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                //_dome.Action(Dome.ACTION_CLOSE_BOTH, null);
-                //or
-                _dome.CloseShutter();
-            }
-            catch (Exception exc)
-            {
-                Log(exc);
-            }
-        }
-
-        #endregion
-
-        private void UpdateUIWhenConnected(bool connected)
-        {
-            btConnect.Enabled = !connected;
-            btDisconnect.Enabled = connected;
-            gpControl.Enabled = connected;
-
-            lbConnectedStatus.Text = connected ? "Connected" : "Not connected";
-
-            lbLeftShutterStatus.Text = "";
-            lbRightShutterStatus.Text = "";
-        }
-
-        void TryConnect(bool connect)
-        {
-            try
-            {
-                if (_dome == null)
-                    _dome = new Dome();
-
-                _dome.Connected = connect; // try to connect to dome
-            }
-            catch (Exception exc)
-            {
-                Log(exc);
-            }
-
-            // update connected status label
-            UpdateUIWhenConnected((_dome != null) ? _dome.Connected : false);
-        }
-
-        private void btConnect_Click(object sender, EventArgs e)
-        {
-            TryConnect(true);
-        }
-
-        private void btDisconnect_Click(object sender, EventArgs e)
-        {
-            TryConnect(false);
-        }
-
-        private void Log(Exception exc)
-        {
-            MessageBox.Show("Error", exc.Message);
-        }
-
-        private void timerStatus_Tick(object sender, EventArgs e)
-        {
-            UpdateUIWhenConnected((_dome != null) ? _dome.Connected : false);
-
-            if ((_dome != null) && (_dome.Connected)) {
-                
-                bool leftShutterClosed = (_dome.LastStatus == ArduinoSerial.STATUS_BOTH_CLOSED) || (_dome.LastStatus == ArduinoSerial.STATUS_LEFT_CLOSED);
-                bool rightShutterClosed = (_dome.LastStatus == ArduinoSerial.STATUS_BOTH_CLOSED) || (_dome.LastStatus == ArduinoSerial.STATUS_RIGHT_CLOSED);
-
-                lbLeftShutterStatus.Text = leftShutterClosed ? "Closed" : "Open";
-                lbRightShutterStatus.Text = rightShutterClosed ? "Closed" : "Open";
-
-            }
-        }
-        
     }
 }
