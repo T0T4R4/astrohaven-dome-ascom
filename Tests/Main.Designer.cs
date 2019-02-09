@@ -1,6 +1,6 @@
 ﻿namespace ASCOM.AstroHaven
 {
-    partial class Form1
+    partial class Main
     {
         /// <summary>
         /// Required designer variable.
@@ -29,11 +29,12 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             this.buttonChoose = new System.Windows.Forms.Button();
             this.labelDriverId = new System.Windows.Forms.Label();
             this.btConnect = new System.Windows.Forms.Button();
             this.gpControl = new System.Windows.Forms.GroupBox();
+            this.pictureBox2 = new System.Windows.Forms.PictureBox();
             this.btOpenBoth = new System.Windows.Forms.Button();
             this.btOpenLeft = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
@@ -54,12 +55,11 @@
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.label2 = new System.Windows.Forms.Label();
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
-            this.pictureBox2 = new System.Windows.Forms.PictureBox();
             this.gpControl.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.picASCOM)).BeginInit();
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             this.SuspendLayout();
             // 
             // buttonChoose
@@ -116,6 +116,17 @@
             this.gpControl.TabStop = false;
             this.gpControl.Text = "Shutter Control";
             // 
+            // pictureBox2
+            // 
+            this.pictureBox2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.pictureBox2.Cursor = System.Windows.Forms.Cursors.Arrow;
+            this.pictureBox2.Location = new System.Drawing.Point(406, 34);
+            this.pictureBox2.Name = "pictureBox2";
+            this.pictureBox2.Size = new System.Drawing.Size(64, 64);
+            this.pictureBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBox2.TabIndex = 35;
+            this.pictureBox2.TabStop = false;
+            // 
             // btOpenBoth
             // 
             this.btOpenBoth.Font = new System.Drawing.Font("Microsoft Sans Serif", 6F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)), true);
@@ -135,7 +146,7 @@
             this.btOpenLeft.TabIndex = 8;
             this.btOpenLeft.Text = "Open";
             this.btOpenLeft.UseVisualStyleBackColor = true;
-            this.btOpenLeft.Click += new System.EventHandler(this.btOpenLeft_Click);
+            this.btOpenLeft.MouseDown += new System.Windows.Forms.MouseEventHandler(this.btOpenLeft_MouseDown);
             // 
             // label1
             // 
@@ -154,7 +165,7 @@
             this.btCloseLeft.TabIndex = 10;
             this.btCloseLeft.Text = "Close";
             this.btCloseLeft.UseVisualStyleBackColor = true;
-            this.btCloseLeft.Click += new System.EventHandler(this.btCloseLeft_Click);
+            this.btCloseLeft.MouseDown += new System.Windows.Forms.MouseEventHandler(this.btCloseLeft_MouseDown);
             // 
             // btCloseBoth
             // 
@@ -175,7 +186,7 @@
             this.btOpenRight.TabIndex = 11;
             this.btOpenRight.Text = "Open";
             this.btOpenRight.UseVisualStyleBackColor = true;
-            this.btOpenRight.Click += new System.EventHandler(this.btOpenRight_Click);
+            this.btOpenRight.MouseDown += new System.Windows.Forms.MouseEventHandler(this.btOpenRight_MouseDown);
             // 
             // label3
             // 
@@ -189,9 +200,10 @@
             // lbRightShutterStatus
             // 
             this.lbRightShutterStatus.AutoSize = true;
+            this.lbRightShutterStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbRightShutterStatus.Location = new System.Drawing.Point(290, 83);
             this.lbRightShutterStatus.Name = "lbRightShutterStatus";
-            this.lbRightShutterStatus.Size = new System.Drawing.Size(110, 13);
+            this.lbRightShutterStatus.Size = new System.Drawing.Size(132, 13);
             this.lbRightShutterStatus.TabIndex = 16;
             this.lbRightShutterStatus.Text = "{Right Shutter Status}";
             // 
@@ -203,14 +215,15 @@
             this.btCloseRight.TabIndex = 13;
             this.btCloseRight.Text = "Close";
             this.btCloseRight.UseVisualStyleBackColor = true;
-            this.btCloseRight.Click += new System.EventHandler(this.btCloseRight_Click);
+            this.btCloseRight.MouseDown += new System.Windows.Forms.MouseEventHandler(this.btCloseRight_MouseDown);
             // 
             // lbLeftShutterStatus
             // 
             this.lbLeftShutterStatus.AutoSize = true;
+            this.lbLeftShutterStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbLeftShutterStatus.Location = new System.Drawing.Point(290, 39);
             this.lbLeftShutterStatus.Name = "lbLeftShutterStatus";
-            this.lbLeftShutterStatus.Size = new System.Drawing.Size(103, 13);
+            this.lbLeftShutterStatus.Size = new System.Drawing.Size(124, 13);
             this.lbLeftShutterStatus.TabIndex = 15;
             this.lbLeftShutterStatus.Text = "{Left Shutter Status}";
             // 
@@ -262,10 +275,12 @@
             // 
             // toolStripStatusLabel2
             // 
+            this.toolStripStatusLabel2.ForeColor = System.Drawing.Color.Red;
             this.toolStripStatusLabel2.Name = "toolStripStatusLabel2";
             this.toolStripStatusLabel2.Size = new System.Drawing.Size(436, 17);
             this.toolStripStatusLabel2.Spring = true;
             this.toolStripStatusLabel2.Text = " ";
+            this.toolStripStatusLabel2.Click += new System.EventHandler(this.toolStripStatusLabel2_Click);
             // 
             // toolStripStatusLabel3
             // 
@@ -304,18 +319,7 @@
             this.imageList1.Images.SetKeyName(2, "Right_Open.jpg");
             this.imageList1.Images.SetKeyName(3, "Both_Open.jpg");
             // 
-            // pictureBox2
-            // 
-            this.pictureBox2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.pictureBox2.Cursor = System.Windows.Forms.Cursors.Arrow;
-            this.pictureBox2.Location = new System.Drawing.Point(406, 34);
-            this.pictureBox2.Name = "pictureBox2";
-            this.pictureBox2.Size = new System.Drawing.Size(64, 64);
-            this.pictureBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.pictureBox2.TabIndex = 35;
-            this.pictureBox2.TabStop = false;
-            // 
-            // Form1
+            // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -331,17 +335,17 @@
             this.Controls.Add(this.pictureBox1);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.Name = "Form1";
+            this.Name = "Main";
             this.Text = "AstroHaven Dome Controller";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.Load += new System.EventHandler(this.Form1_Load);
             this.gpControl.ResumeLayout(false);
             this.gpControl.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.picASCOM)).EndInit();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 

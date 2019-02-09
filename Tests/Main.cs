@@ -4,7 +4,7 @@ using System.Windows.Forms;
 
 namespace ASCOM.AstroHaven
 {
-    public partial class Form1 : Form
+    public partial class Main : Form
     {
         public const string
             ACTION_GET_STATUS = "ACTION_GET_STATUS",
@@ -63,7 +63,7 @@ namespace ASCOM.AstroHaven
         private ASCOM.DriverAccess.Dome _dome;
         private string _lastStatusDescription;
 
-        public Form1()
+        public Main()
         {
             InitializeComponent();
         }
@@ -73,15 +73,21 @@ namespace ASCOM.AstroHaven
         {
             try
             {
-                //Properties.Settings.Default.DriverId = ASCOM.DriverAccess.Dome.Choose("ASCOM.AstroHaven.Dome");
+                if (string.IsNullOrEmpty(Properties.Settings.Default.DriverId))
+                    Properties.Settings.Default.DriverId = ASCOM.DriverAccess.Dome.Choose("ASCOM.AstroHaven.Dome");
+
                 TryConnect(true); // try to autoconnect
             }
             catch (Exception exc)
             {
-                MessageBox.Show("Failed to automatically connect to the ASCOM.AstroHaven.Dome driver");
-
-                // show the driver selection box
+                Log(exc);
             }
+        }
+
+        private void toolStripStatusLabel2_Click(object sender, EventArgs e)
+        {
+            if (toolStripStatusLabel2.Tag != null)
+                MessageBox.Show("Error details", (string)toolStripStatusLabel2.Tag);
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
@@ -92,11 +98,64 @@ namespace ASCOM.AstroHaven
             Properties.Settings.Default.Save();
         }
 
+        private void btOpenRight_MouseDown(object sender, MouseEventArgs e)
+        {
+            try
+            {
+                _dome.Action(ACTION_OPEN_RIGHT, string.Empty);
+            }
+            catch (Exception exc)
+            {
+                Log(exc);
+            }
+        }
+
+        private void btCloseLeft_MouseDown(object sender, MouseEventArgs e)
+        {
+            try
+            {
+                _dome.Action(ACTION_CLOSE_LEFT, string.Empty);
+            }
+            catch (Exception exc)
+            {
+                Log(exc);
+            }
+        }
+
+        private void btCloseRight_MouseDown(object sender, MouseEventArgs e)
+        {
+            try
+            {
+                _dome.Action(ACTION_CLOSE_RIGHT, string.Empty);
+            }
+            catch (Exception exc)
+            {
+                Log(exc);
+            }
+        }
+
+        private void btOpenLeft_MouseDown(object sender, MouseEventArgs e)
+        {
+            try
+            {
+                _dome.Action(ACTION_OPEN_LEFT, string.Empty);
+            }
+            catch (Exception exc)
+            {
+                Log(exc);
+            }
+        }
+
         private void btChoose_Click(object sender, EventArgs e)
         {
             Properties.Settings.Default.DriverId = ASCOM.DriverAccess.Dome.Choose(Properties.Settings.Default.DriverId);
 
-            //UpdateUIWhenConnected(false);
+            if (string.IsNullOrEmpty(Properties.Settings.Default.DriverId))
+            {
+                toolStripStatusLabel2.Text = "Please select an ASCOM Driver";
+            } else
+                toolStripStatusLabel2.Text = string.Empty;
+
         }
 
 
@@ -140,8 +199,6 @@ namespace ASCOM.AstroHaven
                 Log(exc);
             }
 
-            // update connected status label
-            // UpdateUIWhenConnected((_dome != null) ? _dome.Connected : false);
         }
 
         private void btConnect_Click(object sender, EventArgs e)
@@ -150,54 +207,6 @@ namespace ASCOM.AstroHaven
         }
 
         #region Actions
-
-        private void btOpenLeft_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                _dome.Action(ACTION_OPEN_LEFT, string.Empty);
-            }
-            catch (Exception exc)
-            {
-                Log(exc);
-            }
-        }
-
-        private void btCloseLeft_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                _dome.Action(ACTION_CLOSE_LEFT, string.Empty);
-            }
-            catch (Exception exc)
-            {
-                Log(exc);
-            }
-        }
-
-        private void btOpenRight_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                _dome.Action(ACTION_OPEN_RIGHT, string.Empty);
-            }
-            catch (Exception exc)
-            {
-                Log(exc);
-            }
-        }
-
-        private void btCloseRight_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                _dome.Action(ACTION_CLOSE_RIGHT, string.Empty);
-            }
-            catch (Exception exc)
-            {
-                Log(exc);
-            }
-        }
 
 
         private void btOpenBoth_Click(object sender, EventArgs e)
@@ -230,21 +239,15 @@ namespace ASCOM.AstroHaven
 
         #endregion
 
-        private void UpdateUIWhenConnected(bool connected)
-        {
-
-        }
-
 
         private void Log(Exception exc)
         {
-            MessageBox.Show("Error", exc.Message);
+            toolStripStatusLabel2.Text = exc.Message;
+            toolStripStatusLabel2.Tag = exc.ToString();
         }
 
         private void timerStatus_Tick(object sender, EventArgs e)
         {
-            //UpdateUIWhenConnected(IsConnected);
-
             btConnect.Text = IsConnected ? "Disconnect" : "Connect";
             gpControl.Enabled = IsConnected;
 
@@ -277,7 +280,7 @@ namespace ASCOM.AstroHaven
                 if (imgIndex > -1)
                 {
                     pictureBox2.Image = imageList1.Images[imgIndex];
-                } 
+                }
             }
             else
             {
