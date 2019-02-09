@@ -52,14 +52,14 @@
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel3 = new System.Windows.Forms.ToolStripStatusLabel();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.picAstroHaven = new System.Windows.Forms.PictureBox();
             this.label2 = new System.Windows.Forms.Label();
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.gpControl.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.picASCOM)).BeginInit();
             this.statusStrip1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.picAstroHaven)).BeginInit();
             this.SuspendLayout();
             // 
             // buttonChoose
@@ -263,6 +263,7 @@
             this.picASCOM.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
             this.picASCOM.TabIndex = 31;
             this.picASCOM.TabStop = false;
+            this.picASCOM.Click += new System.EventHandler(this.picASCOM_Click);
             // 
             // timerStatus
             // 
@@ -303,18 +304,19 @@
             this.toolStripStatusLabel3.Size = new System.Drawing.Size(10, 17);
             this.toolStripStatusLabel3.Text = " ";
             // 
-            // pictureBox1
+            // picAstroHaven
             // 
-            this.pictureBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.pictureBox1.BackColor = System.Drawing.Color.Transparent;
-            this.pictureBox1.Cursor = System.Windows.Forms.Cursors.Arrow;
-            this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(8, 5);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(216, 75);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
-            this.pictureBox1.TabIndex = 33;
-            this.pictureBox1.TabStop = false;
+            this.picAstroHaven.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.picAstroHaven.BackColor = System.Drawing.Color.Transparent;
+            this.picAstroHaven.Cursor = System.Windows.Forms.Cursors.Arrow;
+            this.picAstroHaven.Image = ((System.Drawing.Image)(resources.GetObject("picAstroHaven.Image")));
+            this.picAstroHaven.Location = new System.Drawing.Point(8, 5);
+            this.picAstroHaven.Name = "picAstroHaven";
+            this.picAstroHaven.Size = new System.Drawing.Size(216, 75);
+            this.picAstroHaven.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.picAstroHaven.TabIndex = 33;
+            this.picAstroHaven.TabStop = false;
+            this.picAstroHaven.Click += new System.EventHandler(this.picAstroHaven_Click);
             // 
             // label2
             // 
@@ -330,10 +332,10 @@
             // 
             this.imageList1.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imageList1.ImageStream")));
             this.imageList1.TransparentColor = System.Drawing.Color.Transparent;
-            this.imageList1.Images.SetKeyName(0, "Both_Closed.jpg");
-            this.imageList1.Images.SetKeyName(1, "Left_Open.jpg");
-            this.imageList1.Images.SetKeyName(2, "Right_Open.jpg");
-            this.imageList1.Images.SetKeyName(3, "Both_Open.jpg");
+            this.imageList1.Images.SetKeyName(0, "Both_Closed.png");
+            this.imageList1.Images.SetKeyName(1, "Left_Open.png");
+            this.imageList1.Images.SetKeyName(2, "Right_Open.png");
+            this.imageList1.Images.SetKeyName(3, "Both_Open.png");
             // 
             // Main
             // 
@@ -349,7 +351,7 @@
             this.Controls.Add(this.gpControl);
             this.Controls.Add(this.labelDriverId);
             this.Controls.Add(this.buttonChoose);
-            this.Controls.Add(this.pictureBox1);
+            this.Controls.Add(this.picAstroHaven);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -363,7 +365,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.picASCOM)).EndInit();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.picAstroHaven)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -392,7 +394,7 @@
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel2;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel3;
-        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.PictureBox picAstroHaven;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.PictureBox pictureBox2;
         private System.Windows.Forms.ImageList imageList1;

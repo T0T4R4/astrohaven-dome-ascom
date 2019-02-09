@@ -89,7 +89,40 @@ namespace ASCOM.AstroHaven
             if (toolStripStatusLabel2.Tag != null)
                 MessageBox.Show("Error details", (string)toolStripStatusLabel2.Tag);
         }
-        
+
+        private void picASCOM_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start("http://ascom-standards.org/");
+            }
+            catch (System.ComponentModel.Win32Exception noBrowser)
+            {
+                if (noBrowser.ErrorCode == -2147467259)
+                    MessageBox.Show(noBrowser.Message);
+            }
+            catch (System.Exception other)
+            {
+                MessageBox.Show(other.Message);
+            }
+        }
+
+        private void picAstroHaven_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start("https://astrohaven.com/");
+            }
+            catch (System.ComponentModel.Win32Exception noBrowser)
+            {
+                if (noBrowser.ErrorCode == -2147467259)
+                    MessageBox.Show(noBrowser.Message);
+            }
+            catch (System.Exception other)
+            {
+                MessageBox.Show(other.Message);
+            }
+        }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
