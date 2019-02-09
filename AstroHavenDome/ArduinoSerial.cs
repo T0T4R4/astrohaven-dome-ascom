@@ -17,6 +17,8 @@ namespace ASCOM.AstroHaven
         internal delegate void ReplyReceivedEventHandler(object sender, EventArgs e); // Our Process stack callback
         internal event ReplyReceivedEventHandler OnReplyReceived;
 
+        private const string LOGGER = "Dome Hardware";
+
         internal static string
             DEFAULT_COMPORT = "COM4",
 
@@ -39,6 +41,8 @@ namespace ASCOM.AstroHaven
             RESPONSE_RIGHT_ALREADY_CLOSED = "Y",
             RESPONSE_RIGHT_ALREADY_OPEN = "y";
 
+        internal static int DEFAULT_BAUD = 9600;
+
         public string LastReceivedChar { get; private set; }
 
         internal ArduinoSerial(String comPort, int baud, bool autostart, StopBits stopBits)
@@ -54,11 +58,11 @@ namespace ASCOM.AstroHaven
                 this.Open();
         }
         internal ArduinoSerial(String comPort, int baud) : this(comPort, baud, true, StopBits.One) { }
-        internal ArduinoSerial() : this(DEFAULT_COMPORT, 9600, true, StopBits.One) { }
+        internal ArduinoSerial() : this(DEFAULT_COMPORT, DEFAULT_BAUD, true, StopBits.One) { }
 
         private void ArduinoSerial_ErrorReceived(object sender, SerialErrorReceivedEventArgs e)
         {
-            Dome.Logger.LogIssue("Arduino", e.EventType.ToString());
+            Dome.Logger.LogIssue(LOGGER, e.EventType.ToString());
         }
 
         private void ArduinoSerial_DataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -76,24 +80,19 @@ namespace ASCOM.AstroHaven
 
                 OnReplyReceived(this, e);
             }
-            catch (IOException)
+            catch (IOException exc)
             {
                 // happens when we disconnect (thread killed ?)
+                Dome.Logger.LogIssue(LOGGER, exc.ToString());
             }
         }
 
 
-        internal string SendCommand(string command, bool waitForResponse = false)
+        internal void SendCommand(string command)
         {
-            if (!this.IsOpen) return null;
+            if (!this.IsOpen) return;
 
             this.Write(command);
-
-            //if (waitForResponse)
-            //    return this.this.ReadLine();
-
-            return null;
-
 
         }
 
@@ -106,7 +105,8 @@ namespace ASCOM.AstroHaven
             }
 
             this.Open();
-            _utils.WaitForMilliseconds(3000);
+            _utils.WaitForMilliseconds(1000);
         }
+
     }
 }
