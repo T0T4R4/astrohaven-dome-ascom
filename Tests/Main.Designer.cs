@@ -64,7 +64,9 @@
             // 
             // buttonChoose
             // 
-            this.buttonChoose.Location = new System.Drawing.Point(240, 81);
+            this.buttonChoose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.buttonChoose.ForeColor = System.Drawing.Color.Red;
+            this.buttonChoose.Location = new System.Drawing.Point(240, 88);
             this.buttonChoose.Name = "buttonChoose";
             this.buttonChoose.Size = new System.Drawing.Size(25, 23);
             this.buttonChoose.TabIndex = 0;
@@ -76,7 +78,9 @@
             // 
             this.labelDriverId.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.labelDriverId.DataBindings.Add(new System.Windows.Forms.Binding("Text", global::ASCOM.AstroHaven.Properties.Settings.Default, "DriverId", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-            this.labelDriverId.Location = new System.Drawing.Point(83, 83);
+            this.labelDriverId.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.labelDriverId.ForeColor = System.Drawing.Color.Red;
+            this.labelDriverId.Location = new System.Drawing.Point(83, 90);
             this.labelDriverId.Name = "labelDriverId";
             this.labelDriverId.Size = new System.Drawing.Size(151, 21);
             this.labelDriverId.TabIndex = 2;
@@ -86,7 +90,9 @@
             // btConnect
             // 
             this.btConnect.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btConnect.Location = new System.Drawing.Point(296, 79);
+            this.btConnect.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btConnect.ForeColor = System.Drawing.Color.Red;
+            this.btConnect.Location = new System.Drawing.Point(403, 81);
             this.btConnect.Name = "btConnect";
             this.btConnect.Size = new System.Drawing.Size(85, 38);
             this.btConnect.TabIndex = 29;
@@ -109,6 +115,8 @@
             this.gpControl.Controls.Add(this.lbLeftShutterStatus);
             this.gpControl.Controls.Add(this.label4);
             this.gpControl.Enabled = false;
+            this.gpControl.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.gpControl.ForeColor = System.Drawing.Color.Red;
             this.gpControl.Location = new System.Drawing.Point(8, 123);
             this.gpControl.Name = "gpControl";
             this.gpControl.Size = new System.Drawing.Size(480, 112);
@@ -129,10 +137,11 @@
             // 
             // btOpenBoth
             // 
-            this.btOpenBoth.Font = new System.Drawing.Font("Microsoft Sans Serif", 6F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)), true);
+            this.btOpenBoth.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btOpenBoth.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)), true);
             this.btOpenBoth.Location = new System.Drawing.Point(84, 34);
             this.btOpenBoth.Name = "btOpenBoth";
-            this.btOpenBoth.Size = new System.Drawing.Size(36, 67);
+            this.btOpenBoth.Size = new System.Drawing.Size(24, 67);
             this.btOpenBoth.TabIndex = 19;
             this.btOpenBoth.Text = "OPEN";
             this.btOpenBoth.UseVisualStyleBackColor = true;
@@ -140,6 +149,7 @@
             // 
             // btOpenLeft
             // 
+            this.btOpenLeft.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btOpenLeft.Location = new System.Drawing.Point(126, 34);
             this.btOpenLeft.Name = "btOpenLeft";
             this.btOpenLeft.Size = new System.Drawing.Size(52, 23);
@@ -159,6 +169,7 @@
             // 
             // btCloseLeft
             // 
+            this.btCloseLeft.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btCloseLeft.Location = new System.Drawing.Point(184, 34);
             this.btCloseLeft.Name = "btCloseLeft";
             this.btCloseLeft.Size = new System.Drawing.Size(54, 23);
@@ -169,10 +180,12 @@
             // 
             // btCloseBoth
             // 
-            this.btCloseBoth.Font = new System.Drawing.Font("Microsoft Sans Serif", 6F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)), true);
+            this.btCloseBoth.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            this.btCloseBoth.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btCloseBoth.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)), true);
             this.btCloseBoth.Location = new System.Drawing.Point(241, 34);
             this.btCloseBoth.Name = "btCloseBoth";
-            this.btCloseBoth.Size = new System.Drawing.Size(43, 67);
+            this.btCloseBoth.Size = new System.Drawing.Size(31, 67);
             this.btCloseBoth.TabIndex = 20;
             this.btCloseBoth.Text = "CLOSE";
             this.btCloseBoth.UseVisualStyleBackColor = true;
@@ -180,6 +193,7 @@
             // 
             // btOpenRight
             // 
+            this.btOpenRight.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btOpenRight.Location = new System.Drawing.Point(126, 78);
             this.btOpenRight.Name = "btOpenRight";
             this.btOpenRight.Size = new System.Drawing.Size(52, 23);
@@ -209,6 +223,7 @@
             // 
             // btCloseRight
             // 
+            this.btCloseRight.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btCloseRight.Location = new System.Drawing.Point(184, 78);
             this.btCloseRight.Name = "btCloseRight";
             this.btCloseRight.Size = new System.Drawing.Size(54, 23);
@@ -304,7 +319,8 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(8, 87);
+            this.label2.ForeColor = System.Drawing.Color.Red;
+            this.label2.Location = new System.Drawing.Point(8, 94);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(69, 13);
             this.label2.TabIndex = 34;
@@ -323,7 +339,8 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.White;
+            this.BackColor = System.Drawing.Color.Black;
+            this.CancelButton = this.btCloseBoth;
             this.ClientSize = new System.Drawing.Size(500, 270);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.statusStrip1);
@@ -333,6 +350,7 @@
             this.Controls.Add(this.labelDriverId);
             this.Controls.Add(this.buttonChoose);
             this.Controls.Add(this.pictureBox1);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "Main";

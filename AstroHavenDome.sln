@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AstroHavenDome", "AstroHavenDome\AstroHavenDome.csproj", "{64308775-BD4A-469C-BCAB-3ED830B811AF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{8E8D406C-1838-4914-867D-AB602D0EAF3E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AstroHavenDomeController", "Tests\AstroHavenDomeController.csproj", "{8E8D406C-1838-4914-867D-AB602D0EAF3E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

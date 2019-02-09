@@ -89,6 +89,7 @@ namespace ASCOM.AstroHaven
             if (toolStripStatusLabel2.Tag != null)
                 MessageBox.Show("Error details", (string)toolStripStatusLabel2.Tag);
         }
+        
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {

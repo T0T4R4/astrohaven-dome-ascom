@@ -46,15 +46,17 @@ namespace ASCOM.AstroHaven
             this.txtLooseBeltThresholdRight = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.picASCOM)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ddMinDelayBetweenCommands)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // btOK
             // 
             this.btOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btOK.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btOK.Location = new System.Drawing.Point(395, 218);
+            this.btOK.Location = new System.Drawing.Point(372, 233);
             this.btOK.Name = "btOK";
             this.btOK.Size = new System.Drawing.Size(59, 32);
             this.btOK.TabIndex = 0;
@@ -66,7 +68,7 @@ namespace ASCOM.AstroHaven
             // 
             this.btCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btCancel.Location = new System.Drawing.Point(14, 217);
+            this.btCancel.Location = new System.Drawing.Point(15, 232);
             this.btCancel.Name = "btCancel";
             this.btCancel.Size = new System.Drawing.Size(59, 33);
             this.btCancel.TabIndex = 1;
@@ -79,7 +81,7 @@ namespace ASCOM.AstroHaven
             this.picASCOM.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.picASCOM.Cursor = System.Windows.Forms.Cursors.Hand;
             this.picASCOM.Image = ((System.Drawing.Image)(resources.GetObject("picASCOM.Image")));
-            this.picASCOM.Location = new System.Drawing.Point(406, 9);
+            this.picASCOM.Location = new System.Drawing.Point(383, 12);
             this.picASCOM.Name = "picASCOM";
             this.picASCOM.Size = new System.Drawing.Size(48, 56);
             this.picASCOM.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
@@ -91,7 +93,7 @@ namespace ASCOM.AstroHaven
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(12, 15);
+            this.label2.Location = new System.Drawing.Point(11, 95);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(61, 13);
             this.label2.TabIndex = 5;
@@ -100,7 +102,7 @@ namespace ASCOM.AstroHaven
             // chkTrace
             // 
             this.chkTrace.AutoSize = true;
-            this.chkTrace.Location = new System.Drawing.Point(15, 86);
+            this.chkTrace.Location = new System.Drawing.Point(345, 94);
             this.chkTrace.Name = "chkTrace";
             this.chkTrace.Size = new System.Drawing.Size(90, 17);
             this.chkTrace.TabIndex = 6;
@@ -110,7 +112,7 @@ namespace ASCOM.AstroHaven
             // comboBoxComPort
             // 
             this.comboBoxComPort.FormattingEnabled = true;
-            this.comboBoxComPort.Location = new System.Drawing.Point(76, 12);
+            this.comboBoxComPort.Location = new System.Drawing.Point(75, 92);
             this.comboBoxComPort.Name = "comboBoxComPort";
             this.comboBoxComPort.Size = new System.Drawing.Size(90, 21);
             this.comboBoxComPort.TabIndex = 7;
@@ -118,7 +120,7 @@ namespace ASCOM.AstroHaven
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(12, 52);
+            this.label1.Location = new System.Drawing.Point(175, 95);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(74, 13);
             this.label1.TabIndex = 8;
@@ -126,7 +128,7 @@ namespace ASCOM.AstroHaven
             // 
             // textboxBaud
             // 
-            this.textboxBaud.Location = new System.Drawing.Point(92, 49);
+            this.textboxBaud.Location = new System.Drawing.Point(255, 92);
             this.textboxBaud.Name = "textboxBaud";
             this.textboxBaud.Size = new System.Drawing.Size(74, 20);
             this.textboxBaud.TabIndex = 9;
@@ -135,7 +137,7 @@ namespace ASCOM.AstroHaven
             // chkAntiLooseBelt
             // 
             this.chkAntiLooseBelt.AutoSize = true;
-            this.chkAntiLooseBelt.Location = new System.Drawing.Point(14, 120);
+            this.chkAntiLooseBelt.Location = new System.Drawing.Point(12, 134);
             this.chkAntiLooseBelt.Name = "chkAntiLooseBelt";
             this.chkAntiLooseBelt.Size = new System.Drawing.Size(142, 17);
             this.chkAntiLooseBelt.TabIndex = 10;
@@ -145,7 +147,7 @@ namespace ASCOM.AstroHaven
             // 
             // ddMinDelayBetweenCommands
             // 
-            this.ddMinDelayBetweenCommands.Location = new System.Drawing.Point(176, 183);
+            this.ddMinDelayBetweenCommands.Location = new System.Drawing.Point(174, 197);
             this.ddMinDelayBetweenCommands.Maximum = new decimal(new int[] {
             5000,
             0,
@@ -165,7 +167,7 @@ namespace ASCOM.AstroHaven
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(14, 185);
+            this.label3.Location = new System.Drawing.Point(12, 199);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(156, 13);
             this.label3.TabIndex = 12;
@@ -174,7 +176,7 @@ namespace ASCOM.AstroHaven
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(255, 185);
+            this.label4.Location = new System.Drawing.Point(253, 199);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(20, 13);
             this.label4.TabIndex = 13;
@@ -183,7 +185,7 @@ namespace ASCOM.AstroHaven
             // txtLooseBeltThresholdLeft
             // 
             this.txtLooseBeltThresholdLeft.Enabled = false;
-            this.txtLooseBeltThresholdLeft.Location = new System.Drawing.Point(229, 148);
+            this.txtLooseBeltThresholdLeft.Location = new System.Drawing.Point(253, 151);
             this.txtLooseBeltThresholdLeft.Name = "txtLooseBeltThresholdLeft";
             this.txtLooseBeltThresholdLeft.Size = new System.Drawing.Size(49, 20);
             this.txtLooseBeltThresholdLeft.TabIndex = 14;
@@ -194,7 +196,7 @@ namespace ASCOM.AstroHaven
             // 
             this.label5.AutoSize = true;
             this.label5.Enabled = false;
-            this.label5.Location = new System.Drawing.Point(30, 151);
+            this.label5.Location = new System.Drawing.Point(54, 154);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(193, 13);
             this.label5.TabIndex = 15;
@@ -203,7 +205,7 @@ namespace ASCOM.AstroHaven
             // txtLooseBeltThresholdRight
             // 
             this.txtLooseBeltThresholdRight.Enabled = false;
-            this.txtLooseBeltThresholdRight.Location = new System.Drawing.Point(319, 148);
+            this.txtLooseBeltThresholdRight.Location = new System.Drawing.Point(343, 151);
             this.txtLooseBeltThresholdRight.Name = "txtLooseBeltThresholdRight";
             this.txtLooseBeltThresholdRight.Size = new System.Drawing.Size(49, 20);
             this.txtLooseBeltThresholdRight.TabIndex = 16;
@@ -214,7 +216,7 @@ namespace ASCOM.AstroHaven
             // 
             this.label6.AutoSize = true;
             this.label6.Enabled = false;
-            this.label6.Location = new System.Drawing.Point(226, 132);
+            this.label6.Location = new System.Drawing.Point(250, 135);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(54, 13);
             this.label6.TabIndex = 17;
@@ -224,17 +226,31 @@ namespace ASCOM.AstroHaven
             // 
             this.label7.AutoSize = true;
             this.label7.Enabled = false;
-            this.label7.Location = new System.Drawing.Point(316, 132);
+            this.label7.Location = new System.Drawing.Point(340, 135);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(61, 13);
             this.label7.TabIndex = 18;
             this.label7.Text = "Right panel";
             // 
+            // pictureBox1
+            // 
+            this.pictureBox1.BackColor = System.Drawing.Color.Transparent;
+            this.pictureBox1.Cursor = System.Windows.Forms.Cursors.Arrow;
+            this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
+            this.pictureBox1.Location = new System.Drawing.Point(7, 2);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(216, 75);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            this.pictureBox1.TabIndex = 34;
+            this.pictureBox1.TabStop = false;
+            // 
             // SetupDialogForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(466, 262);
+            this.BackColor = System.Drawing.Color.White;
+            this.ClientSize = new System.Drawing.Size(443, 277);
+            this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.txtLooseBeltThresholdRight);
@@ -258,10 +274,11 @@ namespace ASCOM.AstroHaven
             this.Name = "SetupDialogForm";
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "AstroHaven Setup";
+            this.Text = "AstroHaven Dome ASCOM Driver Setup";
             this.Load += new System.EventHandler(this.SetupDialogForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.picASCOM)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ddMinDelayBetweenCommands)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -286,5 +303,6 @@ namespace ASCOM.AstroHaven
         private System.Windows.Forms.TextBox txtLooseBeltThresholdRight;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.PictureBox pictureBox1;
     }
 }
