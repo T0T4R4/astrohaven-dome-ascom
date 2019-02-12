@@ -6,7 +6,7 @@
 #include <stdio.h> // for function sprintf
 
 bool DEBUG=false;
-int step = 10;
+int step = 1;
 int leftShutterOpenPerc = 0;  // percentage open (left shutter)
 int rightShutterOpenPerc = 0; // percentage open (right shutter)
 
@@ -77,30 +77,30 @@ void parseCommand(char s) {
     }
     else if (s == 'a') { 
         // Attempt to open the left shutter
-        if (leftShutterOpenPerc < 100) {
+        if (leftShutterOpenPerc < 180) {
             leftShutterOpenPerc += step;
         } else {
           // Cannot open the left shutter as it is already open
-            leftShutterOpenPerc = 100;
+            leftShutterOpenPerc = 180;
             Serial.print('x');
         }
     }
     else if (s == 'b'){ 
       // Attempt to open the right shutter
-        if (rightShutterOpenPerc < 100) {
+        if (rightShutterOpenPerc < 180) {
             rightShutterOpenPerc += step;
         } else {
           // Cannot open the right shutter as it is already open
-            rightShutterOpenPerc = 100;
+            rightShutterOpenPerc = 180;
             Serial.print('y'); 
         }
     } 
     else if (s == 'O'){ 
         // Fully open both shutters
-        if ((rightShutterOpenPerc < 100) || (leftShutterOpenPerc < 100)) {
+        if ((rightShutterOpenPerc < 180) || (leftShutterOpenPerc < 180)) {
           delay(10000); // 10 seconds approx. to open both
-          rightShutterOpenPerc = 100;
-          leftShutterOpenPerc = 100;
+          rightShutterOpenPerc = 180;
+          leftShutterOpenPerc = 180;
         }
     } 
     else if (s == 'C'){ 

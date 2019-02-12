@@ -20,7 +20,6 @@ namespace ASCOM.AstroHaven
         private const string LOGGER = "Dome Hardware";
 
         internal static string
-            DEFAULT_COMPORT = "COM4",
 
             COMMAND_GET_STATUS = "S",
             COMMAND_OPEN_LEFT = "a",
@@ -32,8 +31,8 @@ namespace ASCOM.AstroHaven
             COMMAND_RESET = "R",
 
             STATUS_BOTH_CLOSED = "0",
-            STATUS_RIGHT_CLOSED = "1",
-            STATUS_LEFT_CLOSED = "2",
+            STATUS_RIGHT_OPEN_LEFT_CLOSED = "1",
+            STATUS_RIGHT_CLOSED_LEFT_OPEN = "2",
             STATUS_BOTH_OPEN = "3",
 
             RESPONSE_LEFT_ALREADY_CLOSED = "X",
@@ -58,11 +57,21 @@ namespace ASCOM.AstroHaven
                 this.Open();
         }
         internal ArduinoSerial(String comPort, int baud) : this(comPort, baud, true, StopBits.One) { }
-        internal ArduinoSerial() : this(DEFAULT_COMPORT, DEFAULT_BAUD, true, StopBits.One) { }
+        //internal ArduinoSerial() : this("", DEFAULT_BAUD, true, StopBits.One) { }
 
         private void ArduinoSerial_ErrorReceived(object sender, SerialErrorReceivedEventArgs e)
         {
             Dome.Logger.LogIssue(LOGGER, e.EventType.ToString());
+        }
+
+        private void readExisting()
+        {
+            var chars = this.ReadExisting().Trim("\r\n".ToCharArray());
+
+            if ((!string.IsNullOrEmpty(chars) && chars.Length > 0))
+                LastReceivedChar = chars[0].ToString();
+            else
+                LastReceivedChar = null;
         }
 
         private void ArduinoSerial_DataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -71,12 +80,9 @@ namespace ASCOM.AstroHaven
             {
                 if (!this.IsOpen) return;
 
-                var chars = this.ReadExisting().Trim("\r\n".ToCharArray());
-
-                if ((!string.IsNullOrEmpty(chars) && chars.Length > 0))
-                    LastReceivedChar = chars[0].ToString();
-                else
-                    LastReceivedChar = null;
+                // readExisting
+                var c = (char)this.ReadChar();
+                LastReceivedChar = c.ToString();
 
                 OnReplyReceived(this, e);
             }
@@ -92,8 +98,11 @@ namespace ASCOM.AstroHaven
         {
             if (!this.IsOpen) return;
 
+            _utils.WaitForMilliseconds(Dome.MinDelayBtwnCommands);
+
             this.Write(command);
 
+            readExisting();
         }
 
         internal void ResetConnection()

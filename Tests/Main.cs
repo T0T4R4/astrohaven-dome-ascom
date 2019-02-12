@@ -6,25 +6,23 @@ namespace ASCOM.AstroHaven
 {
     public partial class Main : Form
     {
-        public const string
+        // Copy pasted list of actions and statuses from the Dome driver
+        //
+
+        internal const string
             ACTION_GET_STATUS = "ACTION_GET_STATUS",
             ACTION_LASTSTATUS = "ACTION_LAST_STATUS",
 
-            ACTION_OPEN_LEFT = "ACTION_OPEN_LEFT",
-            ACTION_OPEN_RIGHT = "ACTION_OPEN_RIGHT",
-
-            ACTION_CLOSE_LEFT = "ACTION_CLOSE_LEFT",
-            ACTION_CLOSE_RIGHT = "ACTION_CLOSE_RIGHT",
+            ACTION_ABORT = "ACTION_ABORT",
 
             ACTION_OPEN_BOTH = "ACTION_OPEN_BOTH",
             ACTION_CLOSE_BOTH = "ACTION_CLOSE_BOTH"
-
            ;
 
-        public const string
+        internal const string
             STATUS_BOTH_CLOSED = "0",
-            STATUS_RIGHT_CLOSED = "1",
-            STATUS_LEFT_CLOSED = "2",
+            STATUS_RIGHT_OPEN_LEFT_CLOSED = "1",
+            STATUS_RIGHT_CLOSED_LEFT_OPEN = "2",
             STATUS_BOTH_OPEN = "3",
 
             RESPONSE_LEFT_ALREADY_CLOSED = "X",
@@ -40,10 +38,10 @@ namespace ASCOM.AstroHaven
                     return "Both panels closed";
                 case STATUS_BOTH_OPEN:
                     return "Both panels open";
-                case STATUS_LEFT_CLOSED:
-                    return "Left panel closed";
-                case STATUS_RIGHT_CLOSED:
-                    return "Right panel closed";
+                case STATUS_RIGHT_OPEN_LEFT_CLOSED:
+                    return "Right panel is still open";
+                case STATUS_RIGHT_CLOSED_LEFT_OPEN:
+                    return "Left panel is still open";
 
                 case RESPONSE_LEFT_ALREADY_CLOSED:
                     return "Left panel already closed";
@@ -56,6 +54,32 @@ namespace ASCOM.AstroHaven
 
                 default:
                     return String.Format("Unknown '{0}'", statusCode);
+            }
+        }
+
+        private enum Panel { Left, Right }
+        private enum Direction { Open, Close }
+        private enum Step { Full, Partial }
+
+        private string GetActionName(Panel panel, Direction direction, Step step)
+        {
+            var p = (panel == Panel.Left) ? "LEFT" : "RIGHT";
+            var d = (direction == Direction.Open) ? "OPEN" : "CLOSE";
+            var s = (step == Step.Full) ? "FULL" : "STEP";
+
+            return string.Format("ACTION_{0}_{1}_{2}", d, p, s);
+        }
+
+        private void doDomeAction(Panel panel, Direction direction, bool stepBystep)
+        {
+            if (stepBystep)
+            {
+                // step by step
+                _dome.Action(GetActionName(panel, direction, Step.Partial), string.Empty);
+            }
+            else
+            {
+                _dome.Action(GetActionName(panel, direction, Step.Full), string.Empty);
             }
         }
 
@@ -73,6 +97,7 @@ namespace ASCOM.AstroHaven
         {
             try
             {
+                SetButtonClicks();
                 if (string.IsNullOrEmpty(Properties.Settings.Default.DriverId))
                     Properties.Settings.Default.DriverId = ASCOM.DriverAccess.Dome.Choose("ASCOM.AstroHaven.Dome");
 
@@ -81,6 +106,30 @@ namespace ASCOM.AstroHaven
             catch (Exception exc)
             {
                 Log(exc);
+            }
+        }
+
+        private void SetButtonClicks()
+        {
+            btCloseLeft.Tag = new object[] { Panel.Left, Direction.Close };
+            btCloseLeft.Click += OnDomeActionClicked;
+
+            btOpenLeft.Tag = new object[] { Panel.Left, Direction.Open };
+            btOpenLeft.Click += OnDomeActionClicked;
+
+            btCloseRight.Tag = new object[] { Panel.Right, Direction.Close };
+            btCloseRight.Click += OnDomeActionClicked;
+
+            btOpenRight.Tag = new object[] { Panel.Right, Direction.Open };
+            btOpenRight.Click += OnDomeActionClicked;
+        }
+
+        private void OnDomeActionClicked(object sender, EventArgs e)
+        {
+            var par = (object[]) ((Button)sender).Tag;
+            if (!backgroundWorker1.IsBusy)
+            {
+                backgroundWorker1.RunWorkerAsync(par);
             }
         }
 
@@ -124,61 +173,34 @@ namespace ASCOM.AstroHaven
             }
         }
 
+        private void backgroundWorker1_ProgressChanged(object sender, System.ComponentModel.ProgressChangedEventArgs e)
+        {
+
+        }
+
+        private void backgroundWorker1_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
+        {
+        }
+
+        private void backgroundWorker1_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
+        {
+            var par = (object[]) e.Argument;
+            toolStripStatusLabel2.Text = "Please wait...";
+            doDomeAction((Panel)par[0], (Direction)par[1], ModifierKeys == Keys.Shift);
+        }
+        
+        private void btAbort_Click(object sender, EventArgs e)
+        {
+            _dome.Action(ACTION_ABORT, "");
+        }
+
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (IsConnected)
-                _dome.Connected = false;
+            TryConnect(false);
 
             Properties.Settings.Default.Save();
         }
-
-        private void btOpenRight_MouseDown(object sender, MouseEventArgs e)
-        {
-            try
-            {
-                _dome.Action(ACTION_OPEN_RIGHT, string.Empty);
-            }
-            catch (Exception exc)
-            {
-                Log(exc);
-            }
-        }
-
-        private void btCloseLeft_MouseDown(object sender, MouseEventArgs e)
-        {
-            try
-            {
-                _dome.Action(ACTION_CLOSE_LEFT, string.Empty);
-            }
-            catch (Exception exc)
-            {
-                Log(exc);
-            }
-        }
-
-        private void btCloseRight_MouseDown(object sender, MouseEventArgs e)
-        {
-            try
-            {
-                _dome.Action(ACTION_CLOSE_RIGHT, string.Empty);
-            }
-            catch (Exception exc)
-            {
-                Log(exc);
-            }
-        }
-
-        private void btOpenLeft_MouseDown(object sender, MouseEventArgs e)
-        {
-            try
-            {
-                _dome.Action(ACTION_OPEN_LEFT, string.Empty);
-            }
-            catch (Exception exc)
-            {
-                Log(exc);
-            }
-        }
+      
 
         private void btChoose_Click(object sender, EventArgs e)
         {
@@ -187,9 +209,11 @@ namespace ASCOM.AstroHaven
             if (string.IsNullOrEmpty(Properties.Settings.Default.DriverId))
             {
                 toolStripStatusLabel2.Text = "Please select an ASCOM Driver";
-            } else
+            }
+            else
+            {
                 toolStripStatusLabel2.Text = string.Empty;
-
+            }
         }
 
 
@@ -293,16 +317,17 @@ namespace ASCOM.AstroHaven
 
                 toolStripStatusLabel3.Text = GetStatusDescription(lastStatus);
 
-                var tempStatus = (lastStatus == RESPONSE_LEFT_ALREADY_CLOSED) ||
+                var statusAlert = (lastStatus == RESPONSE_LEFT_ALREADY_CLOSED) ||
                     (lastStatus == RESPONSE_RIGHT_ALREADY_CLOSED) ||
                     (lastStatus == RESPONSE_LEFT_ALREADY_OPEN) ||
                     (lastStatus == RESPONSE_RIGHT_ALREADY_OPEN);
 
-                if (!tempStatus)
+                if (!statusAlert)
                 {
-
-                    bool leftShutterClosed = (lastStatus == STATUS_BOTH_CLOSED) || (lastStatus == STATUS_LEFT_CLOSED);
-                    bool rightShutterClosed = (lastStatus == STATUS_BOTH_CLOSED) || (lastStatus == STATUS_RIGHT_CLOSED);
+                    bool leftShutterClosed = (lastStatus == STATUS_BOTH_CLOSED) || 
+                        (lastStatus == STATUS_RIGHT_OPEN_LEFT_CLOSED);
+                    bool rightShutterClosed = (lastStatus == STATUS_BOTH_CLOSED) || 
+                        (lastStatus == STATUS_RIGHT_CLOSED_LEFT_OPEN);
 
                     lbLeftShutterStatus.Text = leftShutterClosed ? "Closed" : "Open";
                     lbRightShutterStatus.Text = rightShutterClosed ? "Closed" : "Open";
@@ -332,9 +357,9 @@ namespace ASCOM.AstroHaven
             {
                 case STATUS_BOTH_CLOSED:
                     return 0;
-                case STATUS_LEFT_CLOSED:
+                case STATUS_RIGHT_OPEN_LEFT_CLOSED:
                     return 1;
-                case STATUS_RIGHT_CLOSED:
+                case STATUS_RIGHT_CLOSED_LEFT_OPEN:
                     return 2;
                 case STATUS_BOTH_OPEN:
                     return 3;
