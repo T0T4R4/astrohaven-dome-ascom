@@ -41,7 +41,7 @@ Source: "C:\ExtendedPartition\_Dev\AstroHavenDome\AstroHavenDome\AstroHavenDome\
 Source: "C:\ExtendedPartition\_Dev\AstroHavenDome\AstroHavenDome\Tests\bin\Debug\*"; DestDir: "{app}\ASCOM.AstroHaven.DomeController"
 
 ; Require a read-me HTML to appear after installation, maybe driver's Help doc
-Source: "C:\ExtendedPartition\_Dev\AstroHavenDome\AstroHavenDome\AstroHavenDome\ReadMe.htm"; DestDir: "{app}"; Flags: isreadme
+; Source: "C:\ExtendedPartition\_Dev\AstroHavenDome\AstroHavenDome\AstroHavenDome\ReadMe.htm"; DestDir: "{app}"; Flags: isreadme
 
 
 ; Only if driver is .NET
