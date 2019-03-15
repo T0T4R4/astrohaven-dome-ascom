@@ -1,4 +1,4 @@
-#ASCOM Driver for AstroHaven clamshell domes
+# ASCOM Driver for AstroHaven clamshell domes
 
 ## Summary 
 
