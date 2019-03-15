@@ -52,6 +52,10 @@ As for every ASCOM Driver, this driver has a few parameters that must be setup t
 - Anti-loose belt protection : this is for domes suffering of the said issue where belts  can be loose when the motor is unwinding due to top panels rubbing too hard on bottom panels. The AstroHaven manual contains some recommendations for this issue but we also found that pausing shortly upon opening shutters sometimes re-tighten the belt.
 - Minimum delay between commands, which is to regulate the flow of commands sent by the driver to the dome serial interface. Beware to not drop the value too low as you might end up flooding the dome console.
 
+## Simulator sketch for arduino
+
+In case you prefer to try out the driver on an arduino, I have also provided a simulator sketch which you can upload to your Arduino Uno.
+
 ## Feedback
 
 Please give me your feedback, positive or negative, raise any issue that occurs with your dome when controlling it via this driver, so we can together enhance this program as a community.
