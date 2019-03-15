@@ -1,5 +1,7 @@
 # ASCOM Driver for AstroHaven clamshell domes
 
+*Disclaimer: This program is not distributed by AstroHaven Enterprises. It is provided to the users community for free, under the Creative Common 3 license.*
+
 ## Summary 
 
 This is my implementation of an **[ASCOM](https://ascom-standards.org/) Driver** which can interact with the console of your **[AstroHaven dome](https://astrohaven.com/)** via its serial connection. The driver is built in C# using the open-source *ASCOM Driver Visual Studio template*  , provided by the *ASCOM Initiative*.
