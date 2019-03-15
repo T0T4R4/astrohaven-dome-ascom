@@ -36,6 +36,8 @@ The installer will create the following elements :
 
 ## How does it works ?
 
+See an [old demo on youtube](https://www.youtube.com/watch?v=VLdz9UV6WUI). The current user interface is black and red, to reduce eyestrain.
+
 As you might know, *AstroHaven* clamshell domes are non-moving domes which have four shutters running in pairs (considered as two shutters by the driver). Thus the only functionality provided by the dome driver are open shutter and close shutter. 
 
 However you will notice that we have added some interesting features like partial, synchronised or independant shutter control. 
