@@ -1,7 +1,12 @@
 .vs/
 AstroHavenDome/obj/
-AstroHavenDome/bin/
 Tests/obj/
-Tests/bin/
 *.avi
-*.exe
+AstroHavenDome/bin/Debug/ASCOM.AstroHaven.Dome.tlb
+AstroHavenDome/bin/Debug/ASCOM.AstroHaven.Dome.pdb
+AstroHavenDome/bin/Debug/ASCOM.AstroHaven.Dome.dll.config
+AstroHavenDome/bin/Debug/ASCOM.AstroHaven.Dome.dll
+Tests/bin/Debug/ASCOM.AstroHaven.Test.pdb
+Tests/bin/Debug/ASCOM.AstroHaven.Test.exe.config
+Tests/bin/Debug/ASCOM.AstroHaven.Test.exe
+AstroHavenDome/AstroHaven.Dome Setup.exe
