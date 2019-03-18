@@ -6,6 +6,8 @@
 
 This is my implementation of an **[ASCOM](https://ascom-standards.org/) Driver** which can interact with the console of your **[AstroHaven dome](https://astrohaven.com/)** via its serial connection. The driver is built in C# using the open-source *ASCOM Driver Visual Studio template*  , provided by the *ASCOM Initiative*.
 
+![screenshot](https://user-images.githubusercontent.com/1294511/54508504-da1e1180-4991-11e9-8bdb-8db12b207d3b.png)
+
 ## Requirements
 
 In order to **use** this driver you will need to install the [ASCOM Platform](https://github.com/ASCOMInitiative/ASCOMPlatform/releases) and the [.NET Framework 4](https://www.microsoft.com/en-au/download/details.aspx?id=17851) (which may already come with the ASCOM Installer).
@@ -38,7 +40,7 @@ The installer will create the following elements :
 
 ## How does it works ?
 
-See an [old demo on youtube](https://www.youtube.com/watch?v=VLdz9UV6WUI). The current user interface is black and red, to reduce eyestrain.
+See an [2min demo on youtube](https://www.youtube.com/watch?v=VLdz9UV6WUI). The current user interface is black and red, to reduce eyestrain.
 
 As you might know, *AstroHaven* clamshell domes are non-moving domes which have four shutters running in pairs (considered as two shutters by the driver). Thus the only functionality provided by the dome driver are open shutter and close shutter. 
 
@@ -51,6 +53,8 @@ We recommend to use test application provided with the dome driver if you requir
 ## Driver setup
 
 As for every ASCOM Driver, this driver has a few parameters that must be setup the first time you use it either programmatically or via the Test application.
+
+![Screenshot at 2019-03-18 10-20-33](https://user-images.githubusercontent.com/1294511/54508652-41d45c80-4992-11e9-9d8f-451ec489a880.png)
 
 - Com port and speed : these should correspond to the serial port on the computer which is bound to the dome console
 - Anti-loose belt protection : this is for domes suffering of the said issue where belts  can be loose when the motor is unwinding due to top panels rubbing too hard on bottom panels. The AstroHaven manual contains some recommendations for this issue but we also found that pausing shortly upon opening shutters sometimes re-tighten the belt.
