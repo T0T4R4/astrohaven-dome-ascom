@@ -1,4 +1,4 @@
-# :dizzy: ASCOM Driver for AstroHaven clamshell domes
+# ![ASCOM](https://avatars1.githubusercontent.com/u/38851363?s=200&v=4) ASCOM Driver for AstroHaven clamshell domes
 
 *Disclaimer: This program is not distributed by AstroHaven Enterprises. It is provided to the users community for free, under the Creative Common 3 license.*
 
