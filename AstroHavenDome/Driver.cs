@@ -69,11 +69,11 @@ namespace ASCOM.AstroHaven
         internal const string
                 PROFILENAME_COMPORT = "COMPort",
                 PROFILENAME_BAUD = "Baud",
-                PROFILENAME_ENABLELOGGING = "TraceLevel",
-                PROFILENAME_MINDELAYBETWEENCMDS = "MinDelayBetweenCommands",
-                PROFILENAME_LOOSEBELTPROTECTION = "LooseBeltProtection",
-                PROFILENAME_LOOSEBELTPROTECTION_INTERVAL = "LooseBeltProtectionThresholdLeft",
-                PROFILENAME_LOOSEBELTPROTECTION_THRESHOLD_RIGHT = "LooseBeltProtectionThresholdRight"
+                PROFILENAME_ENABLE_LOGGING = "TraceLevel",
+                PROFILENAME_MIN_DELAY_BETWEEN_CMDS = "MinDelayBetweenCommands",
+                PROFILENAME_ONOPENING_PAUSE_AFTER = "OnOpeningPauseAfter",
+                PROFILENAME_ONOPENING_PAUSE_DURING = "OnOpeningPauseDuring",
+                PROFILENAME_ONCLOSING_OVERFEED_DURING = "OnClosingOverfeedDuring"
                 ;
 
         // Currrent device configuration
@@ -129,21 +129,28 @@ namespace ASCOM.AstroHaven
             }
         }
 
-        /// <summary>
-        /// If True, enable Anti-Loose belt protection on panel opening by pausing a bit 
-        /// at the beginning of the opening of a panel
-        /// </summary>
-        internal static bool EnableLooseBeltProtection { get; set; } = DEFAULT_LOOSEBELT_PROTECTION;
+
 
         /// <summary>
-        /// Time in seconds after which the dome will temporarily pause when it gets open.
+        /// Delay after which to pause when opening a dome to prevent belt loosening
         /// </summary>
-        internal static int BeltProtectionInterval { get;  set; } = DEFAULT_LOOSEBELT_PROTECTION_INTERVAL;
+        internal static int OnOpeningPauseAfter { get; set; } = DEFAULT_ONOPENING_PAUSE_AFTER;
+
+        /// <summary>
+        /// Duration of the pause on opening to prevent belt loosening
+        /// </summary>
+        internal static int OnOpeningPauseDuring { get; set; } = DEFAULT_ONOPENING_PAUSE_DURING;
+
 
         /// <summary>
         /// Minimum delay in milliseconds between each commmand sent to the dome hardware
         /// </summary>
         internal static int MinDelayBtwnCommands { get; set; } = DEFAULT_MINDELAYBETWEENCOMMANDS;
+
+        /// <summary>
+        /// Duration of the overfeeding on dome closure (time during which commands will be continuously sent to the dome to fully close it - for dodgy domes)
+        /// </summary>
+        internal static int OnClosingOverfeedDuring { get; set; } = DEFAULT_ONCLOSING_OVERFEED_DURING;
 
         internal bool Abort { get; set; }
 
@@ -172,10 +179,13 @@ namespace ASCOM.AstroHaven
             ACTION_CLOSE_BOTH = "ACTION_CLOSE_BOTH"
            ;
 
-        public static readonly bool DEFAULT_LOOSEBELT_PROTECTION = true;
         public static readonly int DEFAULT_MINDELAYBETWEENCOMMANDS = 250; //milliseconds
 
-        public static readonly int DEFAULT_LOOSEBELT_PROTECTION_INTERVAL = 3; // number of seconds after which the opening dome will pause (belt protection)
+        public static readonly int DEFAULT_ONOPENING_PAUSE_AFTER = 2; // seconds 
+        public static readonly int DEFAULT_ONOPENING_PAUSE_DURING = 3; // seconds 
+
+        public static readonly int DEFAULT_ONCLOSING_OVERFEED_DURING = 3; // seconds
+
         internal static readonly int DEFAULT_STEP = 25;
 
 
@@ -339,43 +349,45 @@ namespace ASCOM.AstroHaven
                     break;
 
                 case ACTION_OPEN_LEFT_FULL:
-                    FullOpenSinglePanel(Panel.Left);
+                    openPanel(Panel.Left);
                     break;
 
                 case ACTION_OPEN_LEFT_STEP:
-                    StepMovePanel(Panel.Left, Direction.Open);
+                    stepMovePanel(Panel.Left, Direction.Open);
                     break;
 
                 case ACTION_OPEN_RIGHT_STEP:
-                    StepMovePanel(Panel.Right, Direction.Open);
+                    stepMovePanel(Panel.Right, Direction.Open);
                     break;
 
 
                 case ACTION_CLOSE_LEFT_STEP:
-                    StepMovePanel(Panel.Left, Direction.Close);
+                    stepMovePanel(Panel.Left, Direction.Close);
                     break;
 
                 case ACTION_CLOSE_RIGHT_STEP:
-                    StepMovePanel(Panel.Right, Direction.Close);
+                    stepMovePanel(Panel.Right, Direction.Close);
                     break;
 
 
                 case ACTION_OPEN_RIGHT_FULL:
-                    FullOpenSinglePanel(Panel.Right);
+                    openPanel(Panel.Right);
                     break;
 
                 case ACTION_CLOSE_LEFT_FULL:
-                    FullClosePanel(Panel.Left);
+                    closePanel(Panel.Left);
                     break;
                 case ACTION_CLOSE_RIGHT_FULL:
-                    FullClosePanel(Panel.Right);
+                    closePanel(Panel.Right);
                     break;
 
                 case ACTION_OPEN_BOTH:
-                    FullOpenBothPanels();
+                    openPanel(Panel.Left);
+                    openPanel(Panel.Right);
                     break;
                 case ACTION_CLOSE_BOTH:
-                    FullCloseBothPanels();
+                    closePanel(Panel.Left);
+                    closePanel(Panel.Right);
                     break;
 
                 default:
@@ -883,7 +895,7 @@ namespace ASCOM.AstroHaven
             {
                 driverProfile.DeviceType = LOGGER;
 
-                var loggerEnabledStr = driverProfile.GetValue(DriverID, PROFILENAME_ENABLELOGGING, string.Empty, true.ToString());
+                var loggerEnabledStr = driverProfile.GetValue(DriverID, PROFILENAME_ENABLE_LOGGING, string.Empty, true.ToString());
                 Logger.Enabled = Convert.ToBoolean(loggerEnabledStr);
 
                 ComPort = driverProfile.GetValue(DriverID, PROFILENAME_COMPORT, string.Empty, string.Empty);
@@ -891,14 +903,17 @@ namespace ASCOM.AstroHaven
                 var baudStr = driverProfile.GetValue(DriverID, PROFILENAME_BAUD, string.Empty, ArduinoSerial.DEFAULT_BAUD.ToString());
                 Baud = int.Parse(baudStr);
 
-                var antiLooseBeltStr = driverProfile.GetValue(DriverID, PROFILENAME_LOOSEBELTPROTECTION, string.Empty, DEFAULT_LOOSEBELT_PROTECTION.ToString());
-                EnableLooseBeltProtection = Convert.ToBoolean(antiLooseBeltStr);
-
-                var looseBeltInterval = driverProfile.GetValue(DriverID, PROFILENAME_LOOSEBELTPROTECTION_INTERVAL, string.Empty, DEFAULT_LOOSEBELT_PROTECTION_INTERVAL.ToString());
-                BeltProtectionInterval = int.Parse(looseBeltInterval);
-
-                var minDelayBtwCmdsStr = driverProfile.GetValue(DriverID, PROFILENAME_MINDELAYBETWEENCMDS, string.Empty, DEFAULT_MINDELAYBETWEENCOMMANDS.ToString());
+                var minDelayBtwCmdsStr = driverProfile.GetValue(DriverID, PROFILENAME_MIN_DELAY_BETWEEN_CMDS, string.Empty, DEFAULT_MINDELAYBETWEENCOMMANDS.ToString());
                 MinDelayBtwnCommands = int.Parse(minDelayBtwCmdsStr);
+
+                var onOpeningPauseAfterStr = driverProfile.GetValue(DriverID, PROFILENAME_ONOPENING_PAUSE_AFTER, string.Empty, DEFAULT_ONOPENING_PAUSE_AFTER.ToString());
+                OnOpeningPauseAfter = int.Parse(onOpeningPauseAfterStr);
+
+                var onOpeningPauseDuringStr = driverProfile.GetValue(DriverID, PROFILENAME_ONOPENING_PAUSE_DURING, string.Empty, DEFAULT_ONOPENING_PAUSE_DURING.ToString());
+                OnOpeningPauseDuring = int.Parse(onOpeningPauseDuringStr);
+
+                var onClosingOverfeedDuringStr = driverProfile.GetValue(DriverID, PROFILENAME_ONCLOSING_OVERFEED_DURING, string.Empty, DEFAULT_ONCLOSING_OVERFEED_DURING.ToString());
+                OnClosingOverfeedDuring = int.Parse(onClosingOverfeedDuringStr);
             }
         }
 
@@ -913,12 +928,15 @@ namespace ASCOM.AstroHaven
             using (Profile driverProfile = new Profile())
             {
                 driverProfile.DeviceType = LOGGER;
-                driverProfile.WriteValue(DriverID, PROFILENAME_ENABLELOGGING, Logger.Enabled.ToString());
+                driverProfile.WriteValue(DriverID, PROFILENAME_ENABLE_LOGGING, Logger.Enabled.ToString());
                 driverProfile.WriteValue(DriverID, PROFILENAME_COMPORT, ComPort.ToString());
                 driverProfile.WriteValue(DriverID, PROFILENAME_BAUD, Baud.ToString());
-                driverProfile.WriteValue(DriverID, PROFILENAME_LOOSEBELTPROTECTION, EnableLooseBeltProtection.ToString());
-                driverProfile.WriteValue(DriverID, PROFILENAME_LOOSEBELTPROTECTION_INTERVAL, BeltProtectionInterval.ToString());
-                driverProfile.WriteValue(DriverID, PROFILENAME_MINDELAYBETWEENCMDS, MinDelayBtwnCommands.ToString());
+                driverProfile.WriteValue(DriverID, PROFILENAME_MIN_DELAY_BETWEEN_CMDS, MinDelayBtwnCommands.ToString());
+
+                driverProfile.WriteValue(DriverID, PROFILENAME_ONOPENING_PAUSE_AFTER, OnOpeningPauseAfter.ToString());
+                driverProfile.WriteValue(DriverID, PROFILENAME_ONOPENING_PAUSE_DURING, OnOpeningPauseDuring.ToString());
+                driverProfile.WriteValue(DriverID, PROFILENAME_ONCLOSING_OVERFEED_DURING, OnClosingOverfeedDuring.ToString());
+
             }
         }
 
@@ -975,77 +993,19 @@ namespace ASCOM.AstroHaven
                 (LastStatus == ArduinoSerial.STATUS_RIGHT_CLOSED_LEFT_OPEN);
         }
 
-        private void FullOpenBothPanels()
-        {
-            if (EnableLooseBeltProtection)
-            {
-                if (IsLeftPanelClosed())
-                {
-                    PreOpenPanel(Panel.Left);
-                }
-
-                // pause a little for the belt to settle
-                _utils.WaitForMilliseconds(2000);
-
-                if (IsRightPanelClosed())
-                {
-                    PreOpenPanel(Panel.Right);
-                }
-
-                // pause a little for the belt to settle
-                _utils.WaitForMilliseconds(2000);
-            }
-
-            // Specific command to open both panels
-            // CommandBlind(ArduinoSerial.COMMAND_OPEN_BOTH);
-
-            bool doneLeft = false, doneRight = false; ;
-            Abort = false; // reset
-
-            while (!(doneLeft && doneRight) && !Abort)
-            {
-                doneLeft = IsLeftPanelOpen();
-                if (!doneLeft) StepMovePanel(Panel.Left, Direction.Open);
-
-                doneRight = IsRightPanelOpen();
-                if (!doneRight) StepMovePanel(Panel.Right, Direction.Open);
-
-                CommandBlind(ArduinoSerial.COMMAND_GET_STATUS, false);
-
-            }
-            Abort = false; // reset
-
-        }
-
-        private void FullCloseBothPanels()
-        {
-            // Specific command to open both panels
-            CommandBlind(ArduinoSerial.COMMAND_CLOSE_BOTH);
-        }
-
-
-        private void PreOpenPanel(Panel panel)
-        {
-            // open a little bit until threshold            
-            var cmd = ((panel == Panel.Left) ? ArduinoSerial.COMMAND_OPEN_LEFT : ArduinoSerial.COMMAND_OPEN_RIGHT);
-
-            RepeatCommand(cmd, Dome.BeltProtectionInterval * 1000);
-
-        }
-
-        private void FullOpenSinglePanel(Panel panel)
+        private void openPanel(Panel panel)
         {
 
-            if (EnableLooseBeltProtection)
+            if (OnOpeningPauseAfter > 0)
             {
                 if (panel == Panel.Left && IsLeftPanelClosed())
                 {
-                    PreOpenPanel(Panel.Left);
+                    preOpenPanel(Panel.Left);
                 }
 
                 if (panel == Panel.Right && IsRightPanelClosed())
                 {
-                    PreOpenPanel(Panel.Right);
+                    preOpenPanel(Panel.Right);
                 }
 
 
@@ -1053,6 +1013,9 @@ namespace ASCOM.AstroHaven
                 _utils.WaitForMilliseconds(2000);
 
             }
+
+            // continue with the opening
+            //
 
             bool done = false;
             Abort = false; // reset
@@ -1061,7 +1024,7 @@ namespace ASCOM.AstroHaven
             {
                 done = (panel == Panel.Left) ? IsLeftPanelOpen() : IsRightPanelOpen();
 
-                StepMovePanel(panel, Direction.Open);
+                stepMovePanel(panel, Direction.Open);
 
             }
             Abort = false; // reset
@@ -1071,7 +1034,7 @@ namespace ASCOM.AstroHaven
         /// Closes one panel step by step
         /// </summary>
         /// <param name="panel"></param>
-        private void FullClosePanel(Panel panel)
+        private void closePanel(Panel panel)
         {
             bool done = false;
             Abort = false; // reset
@@ -1080,34 +1043,56 @@ namespace ASCOM.AstroHaven
             {
                 done = (panel == Panel.Left) ? IsLeftPanelClosed() : IsRightPanelClosed();
 
-                StepMovePanel(panel, Direction.Close);
+                stepMovePanel(panel, Direction.Close); // full close
 
             }
+
+            // unless the closure has been manually aborted, continue throwing commands to force the closure
+            // note: this is mostly for domes where the magnetic sensors have been badly positioned
+            if (!Abort && (OnClosingOverfeedDuring > 0))
+            {
+                stepMovePanel(panel, Direction.Close, OnClosingOverfeedDuring * 1000); // force closing 
+            }
+
             Abort = false; // reset
         }
+
 
         /// <summary>
         /// Moves the given panel by step in the given direction
         /// </summary>
         /// <param name="panel"></param>
         /// <param name="dir"></param>
-        private void StepMovePanel(Panel panel, Direction dir)
+        private void stepMovePanel(Panel panel, Direction dir, int stepDurationMsecs = 10)
         {
             // build command sequence
             var cmd = (
                 (panel == Panel.Left) ?
-                    ( ( dir == Direction.Open) ? ArduinoSerial.COMMAND_OPEN_LEFT : ArduinoSerial.COMMAND_CLOSE_LEFT)
+                    ((dir == Direction.Open) ? ArduinoSerial.COMMAND_OPEN_LEFT : ArduinoSerial.COMMAND_CLOSE_LEFT)
                     : // else
-                    ( (dir == Direction.Open) ? ArduinoSerial.COMMAND_OPEN_RIGHT : ArduinoSerial.COMMAND_CLOSE_RIGHT)
+                    ((dir == Direction.Open) ? ArduinoSerial.COMMAND_OPEN_RIGHT : ArduinoSerial.COMMAND_CLOSE_RIGHT)
                 );
 
-
-            CommandBlind(cmd);
+            repeatCommand(cmd, stepDurationMsecs);
 
         }
 
-        private void RepeatCommand(String cmd, int msecs)
+
+        private void preOpenPanel(Panel panel)
         {
+            // open a little bit until threshold            
+            var cmd = ((panel == Panel.Left) ? ArduinoSerial.COMMAND_OPEN_LEFT : ArduinoSerial.COMMAND_OPEN_RIGHT);
+
+            repeatCommand(cmd, OnOpeningPauseDuring * 1000);
+
+        }
+
+        private void repeatCommand(String cmd, int msecs)
+        {
+
+            if (msecs < MinDelayBtwnCommands)
+                msecs = MinDelayBtwnCommands;
+
             DateTime end = DateTime.Now.AddMilliseconds(msecs);
 
             Abort = false; // reset

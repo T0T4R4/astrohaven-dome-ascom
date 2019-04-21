@@ -5,13 +5,13 @@
 [Setup]
 AppID={{d0d50798-3dcc-41ae-9034-a37d50d5ff4b}
 AppName=ASCOM AstroHaven.Dome Dome Driver
-AppVerName=ASCOM AstroHaven.Dome Dome Driver 1.0.0
-AppVersion=1.0.0
+AppVerName=ASCOM AstroHaven.Dome Dome Driver 1.0.1
+AppVersion=1.0.1
 AppPublisher=T0t4r4 <matt.clayton.oz@gmail.com>
 AppPublisherURL=mailto:matt.clayton.oz@gmail.com
-AppSupportURL=http://tech.groups.yahoo.com/group/ASCOM-Talk/
-AppUpdatesURL=http://ascom-standards.org/
-VersionInfoVersion=1.0.0
+AppSupportURL=https://github.com/T0T4R4/astrohaven-dome-ascom
+AppUpdatesURL=https://github.com/T0T4R4/astrohaven-dome-ascom
+VersionInfoVersion=1.0.1
 MinVersion=0,5.0.2195sp4
 DefaultDirName="{cf}\ASCOM\Dome"
 DisableDirPage=yes

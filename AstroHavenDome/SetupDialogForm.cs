@@ -60,12 +60,13 @@ namespace ASCOM.AstroHaven
                 if (comboBoxComPort.Items.Count > 0)
                     comboBoxComPort.SelectedIndex = 0;
             }
-
-            chkAntiLooseBelt.Checked = Dome.EnableLooseBeltProtection;
-
-            txtBeltProtectionInterval.Text = Dome.BeltProtectionInterval.ToString();
-
             ddMinDelayBetweenCommands.Value = Dome.MinDelayBtwnCommands;
+
+
+            txtOnOpeningPauseAfter.Text = Dome.OnOpeningPauseAfter.ToString();
+            txtOnOpeningPauseDuring.Text = Dome.OnOpeningPauseDuring.ToString();
+            txtOnClosingOverfeedDuring.Text = Dome.OnClosingOverfeedDuring.ToString();
+
 
         }
 
@@ -82,13 +83,19 @@ namespace ASCOM.AstroHaven
 
             Dome.Logger.Enabled = chkTrace.Checked;
 
-            Dome.EnableLooseBeltProtection = chkAntiLooseBelt.Checked;
+            Dome.MinDelayBtwnCommands = (ddMinDelayBetweenCommands.Value < 0) ? Dome.DEFAULT_MINDELAYBETWEENCOMMANDS : (int)ddMinDelayBetweenCommands.Value;
 
-            int beltProtectionInterval;
-            int.TryParse(txtBeltProtectionInterval.Text, out beltProtectionInterval);
-            Dome.BeltProtectionInterval = (beltProtectionInterval < 0) ? Dome.DEFAULT_LOOSEBELT_PROTECTION_INTERVAL : beltProtectionInterval;
+            int onOpeningPauseAfter;
+            int.TryParse(txtOnOpeningPauseAfter.Text, out onOpeningPauseAfter);
+            Dome.OnOpeningPauseAfter = (onOpeningPauseAfter < 0) ? Dome.DEFAULT_ONOPENING_PAUSE_AFTER : onOpeningPauseAfter;
 
-            Dome.MinDelayBtwnCommands = (ddMinDelayBetweenCommands.Value < 0) ? Dome.DEFAULT_MINDELAYBETWEENCOMMANDS : (int) ddMinDelayBetweenCommands.Value;
+            int onOpeningPauseDuring;
+            int.TryParse(txtOnOpeningPauseDuring.Text, out onOpeningPauseDuring);
+            Dome.OnOpeningPauseDuring = (onOpeningPauseDuring < 0) ? Dome.DEFAULT_ONOPENING_PAUSE_DURING : onOpeningPauseDuring;
+
+            int onClosingOverfeedDuring;
+            int.TryParse(txtOnClosingOverfeedDuring.Text, out onClosingOverfeedDuring);
+            Dome.OnClosingOverfeedDuring = (onClosingOverfeedDuring < 0) ? Dome.DEFAULT_ONCLOSING_OVERFEED_DURING : onClosingOverfeedDuring;
 
         }
 
@@ -101,12 +108,6 @@ namespace ASCOM.AstroHaven
         {
             if (ddMinDelayBetweenCommands.Value > 1000)
                 ddMinDelayBetweenCommands.Value = 1000;
-        }
-
-        private void chkAntiLooseBelt_CheckedChanged(object sender, EventArgs e)
-        {
-            label5.Enabled = chkAntiLooseBelt.Checked;
-            txtBeltProtectionInterval.Enabled = chkAntiLooseBelt.Checked;
         }
 
         private void pictureBox1_Click(object sender, EventArgs e)
@@ -125,5 +126,6 @@ namespace ASCOM.AstroHaven
                 MessageBox.Show(other.Message);
             }
         }
+        
     }
 }
