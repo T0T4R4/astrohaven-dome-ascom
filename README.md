@@ -54,11 +54,12 @@ We recommend to use test application provided with the dome driver if you requir
 
 As for every ASCOM Driver, this driver has a few parameters that must be setup the first time you use it either programmatically or via the Test application.
 
-![Screenshot at 2019-03-18 10-20-33](https://user-images.githubusercontent.com/1294511/54508652-41d45c80-4992-11e9-9d8f-451ec489a880.png)
-
 - Com port and speed : these should correspond to the serial port on the computer which is bound to the dome console
-- Anti-loose belt protection : this is for domes suffering of the said issue where belts  can be loose when the motor is unwinding due to top panels rubbing too hard on bottom panels. The AstroHaven manual contains some recommendations for this issue but we also found that pausing shortly upon opening shutters sometimes re-tighten the belt.
 - Minimum delay between commands, which is to regulate the flow of commands sent by the driver to the dome serial interface. Beware to not drop the value too low as you might end up flooding the dome console.
+- "On Opening, pause after xxx" : this is a protection against belt loosening ; this is for domes suffering of the said issue where belts can be loose when the motor is unwinding due to top panels rubbing too hard on bottom panels. The AstroHaven manual contains some recommendations for this issue but we also found that pausing shortly upon opening shutters sometimes re-tighten the belt. 
+- "Overfeed when closing" : Some domes have badly placed magnetic sensors and will not fully close even if programmatically the console sensor returns a status of "closed". This options sends more commands than expected when closing the dome to ensure that it actually closes, while disregarding the status returned by the console.
+
+![Screenshot at 2019-03-18 10-20-33](https://github.com/T0T4R4/astrohaven-dome-ascom/blob/master/AstroHavenDome/Images/astrohaven.dome.setup.png)
 
 ## Simulator sketch for arduino
 
