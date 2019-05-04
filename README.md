@@ -1,3 +1,5 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/bmqcyroq9de8o2hb?svg=true)](https://ci.appveyor.com/project/T0T4R4/astrohaven-dome-ascom)
+
 # ASCOM Driver for AstroHaven clamshell domes
 
 *Disclaimer: This program is not distributed by AstroHaven Enterprises. It is provided to the users community for free, under the Creative Common 3 license.*
