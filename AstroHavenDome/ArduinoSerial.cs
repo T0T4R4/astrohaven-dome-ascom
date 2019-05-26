@@ -19,26 +19,37 @@ namespace ASCOM.AstroHaven
 
         private const string LOGGER = "Dome Hardware";
 
-        internal static string
+        internal const string
 
-            COMMAND_GET_STATUS = "S",
-            COMMAND_OPEN_LEFT = "a",
-            COMMAND_OPEN_RIGHT = "b",
-            COMMAND_CLOSE_LEFT = "A",
-            COMMAND_CLOSE_RIGHT = "B",
-            COMMAND_OPEN_BOTH = "O",
-            COMMAND_CLOSE_BOTH = "C",
-            COMMAND_RESET = "R",
+            GET_STATUS = "S",
+            RESET_MOTORS = "R",
 
-            STATUS_BOTH_CLOSED = "0",
-            STATUS_RIGHT_OPEN_LEFT_CLOSED = "1",
-            STATUS_RIGHT_CLOSED_LEFT_OPEN = "2",
-            STATUS_BOTH_OPEN = "3",
+            OPEN_LEFT = "a",
+            OPENING_LEFT = "a", // response when OPEN_LEFT is sent
 
-            RESPONSE_LEFT_ALREADY_CLOSED = "X",
-            RESPONSE_LEFT_ALREADY_OPEN = "x",
-            RESPONSE_RIGHT_ALREADY_CLOSED = "Y",
-            RESPONSE_RIGHT_ALREADY_OPEN = "y";
+            OPEN_RIGHT = "b",
+            OPENING_RIGHT = "b", // response when OPEN_RIGHT is sent
+
+            CLOSE_LEFT = "A",
+            CLOSING_LEFT = "A",  // response when CLOSE_LEFT is sent
+
+            CLOSE_RIGHT = "B",
+            CLOSING_RIGHT = "B",  // response when CLOSE_RIGHT is sent
+
+            // responses when sending the above commands and 
+            // domes are already beyond threshold
+            LEFT_ALREADY_CLOSED = "X",
+            LEFT_ALREADY_OPEN = "x",
+            RIGHT_ALREADY_CLOSED = "Y",
+            RIGHT_ALREADY_OPEN = "y",
+
+        // status returned on idle (when no command is sent)
+            BOTH_CLOSED = "0",
+            LEFT_CLOSED = "1",
+            RIGHT_CLOSED = "2",
+            BOTH_OPEN = "3"
+
+            ;
 
         internal static int DEFAULT_BAUD = 9600;
 
@@ -50,14 +61,16 @@ namespace ASCOM.AstroHaven
             this.PortName = comPort;
             this.StopBits = stopBits;
             this.BaudRate = baud;
+            
             this.DataReceived += new SerialDataReceivedEventHandler(ArduinoSerial_DataReceived);
             this.ErrorReceived += ArduinoSerial_ErrorReceived;
 
             if (autostart)
                 this.Open();
         }
+
+
         internal ArduinoSerial(String comPort, int baud) : this(comPort, baud, true, StopBits.One) { }
-        //internal ArduinoSerial() : this("", DEFAULT_BAUD, true, StopBits.One) { }
 
         private void ArduinoSerial_ErrorReceived(object sender, SerialErrorReceivedEventArgs e)
         {
@@ -66,12 +79,17 @@ namespace ASCOM.AstroHaven
 
         private void readExisting()
         {
-            var chars = this.ReadExisting().Trim("\r\n".ToCharArray());
+            LastReceivedChar = null;
+            var chars = this.ReadExisting();
 
-            if ((!string.IsNullOrEmpty(chars) && chars.Length > 0))
-                LastReceivedChar = chars[0].ToString();
-            else
-                LastReceivedChar = null;
+            if (chars != null)
+            {
+                chars = chars.Trim("\r\n".ToCharArray());
+
+                if ((!string.IsNullOrEmpty(chars) && chars.Length > 0))
+                    LastReceivedChar = chars[0].ToString();
+            }
+                
         }
 
         private void ArduinoSerial_DataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -94,27 +112,15 @@ namespace ASCOM.AstroHaven
         }
 
 
-        internal void SendCommand(string command)
+        internal void Send(string text)
         {
             if (!this.IsOpen) return;
 
             _utils.WaitForMilliseconds(Dome.MinDelayBtwnCommands);
 
-            this.Write(command);
+            this.Write(text);             
 
             readExisting();
-        }
-
-        internal void ResetConnection()
-        {
-            if (this.IsOpen)
-            {
-                this.Close();
-                _utils.WaitForMilliseconds(1000);
-            }
-
-            this.Open();
-            _utils.WaitForMilliseconds(1000);
         }
 
     }

@@ -141,7 +141,6 @@ namespace ASCOM.AstroHaven
         /// </summary>
         internal static int OnOpeningPauseDuring { get; set; } = DEFAULT_ONOPENING_PAUSE_DURING;
 
-
         /// <summary>
         /// Minimum delay in milliseconds between each commmand sent to the dome hardware
         /// </summary>
@@ -158,36 +157,34 @@ namespace ASCOM.AstroHaven
         /// Authorized device-specific actions
         /// </summary>
         internal const string
-            ACTION_GET_STATUS = "ACTION_GET_STATUS",
-            ACTION_LASTSTATUS = "ACTION_LAST_STATUS",
+            ACTION_GET_STATUS = "GET_STATUS",
+            ACTION_GET_LAST_STATUS = "GET_LAST_STATUS",
 
-            ACTION_ABORT = "ACTION_ABORT",
+            ACTION_ABORT = "ABORT",
+            ACTION_RESET_MOTORS = "RESET_MOTORS",
 
-            ACTION_OPEN_LEFT_FULL = "ACTION_OPEN_LEFT_FULL",
-            ACTION_OPEN_RIGHT_FULL = "ACTION_OPEN_RIGHT_FULL",
+            ACTION_OPEN_LEFT_FULL = "OPEN_LEFT_FULL",
+            ACTION_OPEN_RIGHT_FULL = "OPEN_RIGHT_FULL",
 
-            ACTION_OPEN_LEFT_STEP = "ACTION_OPEN_LEFT_STEP",
-            ACTION_OPEN_RIGHT_STEP = "ACTION_OPEN_RIGHT_STEP",
+            ACTION_OPEN_LEFT_STEP = "OPEN_LEFT_STEP",
+            ACTION_OPEN_RIGHT_STEP = "OPEN_RIGHT_STEP",
 
-            ACTION_CLOSE_LEFT_STEP = "ACTION_CLOSE_LEFT_STEP",
-            ACTION_CLOSE_RIGHT_STEP = "ACTION_CLOSE_RIGHT_STEP",
+            ACTION_CLOSE_LEFT_STEP = "CLOSE_LEFT_STEP",
+            ACTION_CLOSE_RIGHT_STEP = "CLOSE_RIGHT_STEP",
 
-            ACTION_CLOSE_LEFT_FULL = "ACTION_CLOSE_LEFT_FULL",
-            ACTION_CLOSE_RIGHT_FULL = "ACTION_CLOSE_RIGHT_FULL",
+            ACTION_CLOSE_LEFT_FULL = "CLOSE_LEFT_FULL",
+            ACTION_CLOSE_RIGHT_FULL = "CLOSE_RIGHT_FULL"
 
-            ACTION_OPEN_BOTH = "ACTION_OPEN_BOTH",
-            ACTION_CLOSE_BOTH = "ACTION_CLOSE_BOTH"
            ;
 
-        public static readonly int DEFAULT_MINDELAYBETWEENCOMMANDS = 250; //milliseconds
-
-        public static readonly int DEFAULT_ONOPENING_PAUSE_AFTER = 2; // seconds 
-        public static readonly int DEFAULT_ONOPENING_PAUSE_DURING = 3; // seconds 
-
-        public static readonly int DEFAULT_ONCLOSING_OVERFEED_DURING = 3; // seconds
-
-        internal static readonly int DEFAULT_STEP = 25;
-
+        internal const int 
+            DEFAULT_MINDELAYBETWEENCOMMANDS = 50, //milliseconds
+            DEFAULT_ONOPENING_PAUSE_AFTER = 2, // seconds 
+            DEFAULT_ONOPENING_PAUSE_DURING = 3, // seconds 
+            DEFAULT_ONCLOSING_OVERFEED_DURING = 3, // seconds
+            DEFAULT_STEP_DURATION = 1, // seconds
+            DEFAULT_PRE_OPENING_DURATION = 2 // seconds 
+            ; 
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Dome"/> class.
@@ -199,7 +196,6 @@ namespace ASCOM.AstroHaven
 
             Logger.LogMessage(LOGGER, "Starting initialisation");
 
-            _IsConnected = false; // Initialise connected to false
             _utils = new Util(); //Initialise util object
             _astroUtils = new AstroUtils(); // Initialise astro utilities object
 
@@ -212,22 +208,12 @@ namespace ASCOM.AstroHaven
         /// Attempts to connect to the hardware given the com port and baud from profile
         /// </summary>
         /// <returns>True if connection succeeded</returns>
-        private bool ConnectDome()
+        private void Connect()
         {
-            bool success = false;
-            try
-            {
-                _arduino = new ArduinoSerial(Dome.ComPort, Dome.Baud);
-                _arduino.OnReplyReceived += new ArduinoSerial.ReplyReceivedEventHandler(onReplyReceived);
-                _utils.WaitForMilliseconds(2000);
+            Disconnect();
 
-                success = true;
-            }
-            catch (Exception exc)
-            {
-                Logger.LogIssue(LOGGER, "Failed to connect to dome : " + exc.Message);
-            }
-            return success;
+            _arduino = new ArduinoSerial(Dome.ComPort, Dome.Baud);
+            _arduino.OnReplyReceived += new ArduinoSerial.ReplyReceivedEventHandler(onReplyReceived);
         }
 
         /// <summary>
@@ -243,23 +229,16 @@ namespace ASCOM.AstroHaven
         /// Attempts to disconnect from hardware
         /// </summary>
         /// <returns>True if successfully disconnected from dome</returns>
-        private bool DisconnectDome()
+        private void Disconnect()
         {
             if ((_arduino != null) && (_arduino.IsOpen))
             {
-                try
-                {
-                    _arduino.Close();
-                }
-                catch (Exception exc)
-                {
-                    Logger.LogIssue(LOGGER, "Failed to disconnect from dome : " + exc.Message);
+                _arduino.Close();
 
-                    return false;
-                }
+                _arduino.Dispose();
+                _arduino = null;
+
             }
-
-            return true;
         }
 
 
@@ -280,11 +259,6 @@ namespace ASCOM.AstroHaven
         /// </summary>
         public void SetupDialog()
         {
-            // consider only showing the setup dialog if not connected
-            // or call a different dialog if connected
-            if (_IsConnected)
-                System.Windows.Forms.MessageBox.Show("Already connected, just press OK");
-
             using (SetupDialogForm f = new SetupDialogForm())
             {
                 var result = f.ShowDialog();
@@ -302,11 +276,12 @@ namespace ASCOM.AstroHaven
         {
             get
             {
-                //tl.LogMessage("SupportedActions Get", "Returning empty arraylist");
                 var actions = new ArrayList();
 
                 actions.Add(ACTION_GET_STATUS);
-                actions.Add(ACTION_LASTSTATUS);
+                actions.Add(ACTION_GET_LAST_STATUS);
+
+                actions.Add(ACTION_RESET_MOTORS);
 
                 actions.Add(ACTION_ABORT);
 
@@ -322,9 +297,6 @@ namespace ASCOM.AstroHaven
                 actions.Add(ACTION_CLOSE_LEFT_STEP);
                 actions.Add(ACTION_CLOSE_RIGHT_STEP);
 
-                actions.Add(ACTION_OPEN_BOTH);
-                actions.Add(ACTION_CLOSE_BOTH);
-
                 return actions;
             }
         }
@@ -335,10 +307,10 @@ namespace ASCOM.AstroHaven
             switch (actionName)
             {
                 case ACTION_GET_STATUS:
-                    CommandBlind(ArduinoSerial.COMMAND_GET_STATUS, false);
+                    CommandBlind(ArduinoSerial.GET_STATUS, false);
                     return LastStatus;
 
-                case ACTION_LASTSTATUS:
+                case ACTION_GET_LAST_STATUS:
                     if (String.IsNullOrEmpty(LastStatus))
                         return Action(ACTION_GET_STATUS, string.Empty);
                     else
@@ -377,21 +349,12 @@ namespace ASCOM.AstroHaven
                 case ACTION_CLOSE_LEFT_FULL:
                     closePanel(Panel.Left);
                     break;
+
                 case ACTION_CLOSE_RIGHT_FULL:
                     closePanel(Panel.Right);
                     break;
 
-                case ACTION_OPEN_BOTH:
-                    openPanel(Panel.Left);
-                    openPanel(Panel.Right);
-                    break;
-                case ACTION_CLOSE_BOTH:
-                    closePanel(Panel.Left);
-                    closePanel(Panel.Right);
-                    break;
-
                 default:
-                    LogMessage(string.Empty, "Action {0}, parameters {1} not implemented", actionName, actionParameters);
                     throw new ASCOM.ActionNotImplementedException("Action " + actionName + " is not implemented by this driver");
 
             }
@@ -403,10 +366,10 @@ namespace ASCOM.AstroHaven
 
         public void CommandBlind(string command, bool raw = false)
         {
-            requiresConnected("CommandBlind");
+            requiresConnected();
 
             if (_arduino != null)
-                _arduino.SendCommand(command);
+                _arduino.Send(command);
 
         }
 
@@ -422,6 +385,8 @@ namespace ASCOM.AstroHaven
 
         public void Dispose()
         {
+            Disconnect();
+
             // Clean up the tracelogger and util objects
             _Logger.Enabled = false;
             _Logger.Dispose();
@@ -432,19 +397,7 @@ namespace ASCOM.AstroHaven
             _astroUtils.Dispose();
             _astroUtils = null;
 
-            // ensure that we disconnect from the serial
-            if ((_arduino != null) && (_arduino.IsOpen))
-            {
-                _arduino.Close();
-                _arduino.Dispose();
-                _arduino = null;
-            }
         }
-
-        /// <summary>
-        /// Returns true if there is a valid connection to the driver hardware
-        /// </summary>
-        private bool _IsConnected;
 
         /// <summary>
         /// Get : Returns true if connected to hardware
@@ -454,13 +407,10 @@ namespace ASCOM.AstroHaven
         {
             get
             {
-                return _IsConnected;
+                return (_arduino != null) ? _arduino.IsOpen : false;
             }
             set
             {
-                if (value == _IsConnected)
-                    return; // doing nothing
-
                 if (value)
                 {
                     // Setting to True means we try to connect to the device
@@ -468,12 +418,7 @@ namespace ASCOM.AstroHaven
 
                     LogMessage(LOGGER, "Connecting to device on port {0}", ComPort);
 
-                    _IsConnected = ConnectDome();
-
-                    if (_IsConnected)
-                        LogMessage(LOGGER, "Successfully connected to port {0}", ComPort);
-                    else
-                        LogMessage(LOGGER, "Failed to connect to port {0}", ComPort);
+                    Connect();
                 }
                 else
                 {
@@ -482,22 +427,20 @@ namespace ASCOM.AstroHaven
 
                     LogMessage(LOGGER, "Disconnecting from port {0}", ComPort);
 
-                    if (DisconnectDome())
-                        _IsConnected = false;
+                    Disconnect();
 
                 }
             }
         }
 
         /// <summary>
-        /// Throws an exception if not connected to the hardware
+        /// Automatically tries to reconnect to the hardware
         /// </summary>
-        /// <param name="message">Message to attach to the NotConnectedException objet returned.</param>
-        private void requiresConnected(string message)
+        private void requiresConnected()
         {
-            if (!Connected)
+            if ((_arduino == null) || (!_arduino.IsOpen))
             {
-                throw new ASCOM.NotConnectedException(message);
+                Connect();
             }
         }
 
@@ -710,19 +653,17 @@ namespace ASCOM.AstroHaven
         public void CloseShutter()
         {
             Logger.LogMessage("CloseShutter", "Closing shutters...");
-            Action(ACTION_CLOSE_BOTH, string.Empty);
+            Action(ACTION_CLOSE_LEFT_FULL, string.Empty);
+            Action(ACTION_CLOSE_RIGHT_FULL, string.Empty);
+
         }
 
 
         public void OpenShutter()
         {
             Logger.LogMessage("OpenShutter", "Opening shutters...");
-            Action(ACTION_OPEN_BOTH, string.Empty);
-            //var result = Action(ACTION_OPEN_BOTH, string.Empty);
-            //if (result == ArduinoSerial.STATUS_BOTH_OPEN)
-            //    Logger.LogMessage("OpenShutter", "Both shutter are open");
-            //else
-            //    Logger.LogMessage("OpenShutter", "Somewhat shutters are not both open : " + result);
+            Action(ACTION_OPEN_LEFT_FULL, string.Empty);
+            Action(ACTION_OPEN_RIGHT_FULL, string.Empty);
         }
 
 
@@ -746,13 +687,27 @@ namespace ASCOM.AstroHaven
         {
             get
             {
-                // returns last received status
-                if (LastStatus == ArduinoSerial.STATUS_BOTH_OPEN)
-                    return ShutterState.shutterOpen;
-                else if (LastStatus == ArduinoSerial.STATUS_BOTH_CLOSED)
-                    return ShutterState.shutterClosed;
-                else
-                    return ShutterState.shutterOpening; // in-between state, one of the panels is partially open (or closed)
+                // Note: this ASCOM property has been desined for single shutters. Use the ACTION("LAST_STATUS") instead when possible.
+
+                switch (LastStatus)
+                {
+                    case ArduinoSerial.BOTH_CLOSED:
+                        return ShutterState.shutterClosed;
+
+                    case ArduinoSerial.BOTH_OPEN:
+                        return ShutterState.shutterOpen;
+
+                    case ArduinoSerial.CLOSING_LEFT:
+                    case ArduinoSerial.CLOSING_RIGHT:
+                        return ShutterState.shutterClosing;
+
+                    case ArduinoSerial.OPENING_LEFT:
+                    case ArduinoSerial.OPENING_RIGHT:
+                        return ShutterState.shutterOpening;
+
+                    default:
+                        return ShutterState.shutterError; // Attention: if only 1 panel is closed/open, then expect to receive error....
+                }
             }
         }
 
@@ -798,8 +753,6 @@ namespace ASCOM.AstroHaven
                 return false;
             }
         }
-
-
 
         /// <summary>
         /// Throws an exception as not implemented in this driver
@@ -967,51 +920,101 @@ namespace ASCOM.AstroHaven
 
         private bool IsLeftPanelOpen()
         {
-            return (LastStatus == ArduinoSerial.STATUS_BOTH_OPEN) ||
-                (LastStatus == ArduinoSerial.STATUS_RIGHT_CLOSED_LEFT_OPEN) ||
-                (LastStatus == ArduinoSerial.RESPONSE_LEFT_ALREADY_OPEN);
-        }
+            return LastStatus == ArduinoSerial.BOTH_OPEN ||
+                 LastStatus == ArduinoSerial.LEFT_ALREADY_OPEN;
 
-        private bool IsLeftPanelClosed()
-        {
-            return (LastStatus == ArduinoSerial.STATUS_BOTH_CLOSED) || 
-                (LastStatus == ArduinoSerial.RESPONSE_LEFT_ALREADY_CLOSED) ||
-                (LastStatus == ArduinoSerial.STATUS_RIGHT_OPEN_LEFT_CLOSED);
         }
 
         private bool IsRightPanelOpen()
         {
-            return (LastStatus == ArduinoSerial.STATUS_BOTH_OPEN) ||
-                (LastStatus == ArduinoSerial.STATUS_RIGHT_OPEN_LEFT_CLOSED) ||
-                (LastStatus == ArduinoSerial.RESPONSE_RIGHT_ALREADY_OPEN);
+            return LastStatus == ArduinoSerial.BOTH_OPEN ||
+                 LastStatus == ArduinoSerial.RIGHT_ALREADY_OPEN;
+
+        }
+
+        private bool IsLeftPanelClosed()
+        {
+            return (LastStatus == ArduinoSerial.BOTH_CLOSED) ||
+                 (LastStatus == ArduinoSerial.LEFT_ALREADY_CLOSED);
+
         }
 
         private bool IsRightPanelClosed()
         {
-            return (LastStatus == ArduinoSerial.STATUS_BOTH_CLOSED) ||
-                (LastStatus == ArduinoSerial.RESPONSE_RIGHT_ALREADY_CLOSED) ||
-                (LastStatus == ArduinoSerial.STATUS_RIGHT_CLOSED_LEFT_OPEN);
+            return (LastStatus == ArduinoSerial.BOTH_CLOSED) ||
+                 (LastStatus == ArduinoSerial.RIGHT_ALREADY_CLOSED);
+
+        }
+
+        /// <summary>
+        /// Repeat a command for a given duration
+        /// </summary>
+        /// <param name="cmd">Command to repeat</param>
+        /// <param name="repeatDuration">Duration in milliseconds to repeat this command</param>
+        private void repeatCommand(String cmd, int repeatDuration)
+        {
+
+            if (repeatDuration < MinDelayBtwnCommands)
+                repeatDuration = MinDelayBtwnCommands;
+
+            DateTime end = DateTime.Now.AddMilliseconds(repeatDuration);
+
+            Abort = false; // reset
+
+            while (!Abort)
+            {
+                CommandBlind(cmd); // do at least once 
+
+                if (DateTime.Now < end) break;
+            }
+
+            Abort = false; // reset
+        }
+
+
+        /// <summary>
+        /// Moves the given panel by step in the given direction
+        /// </summary>
+        /// <param name="panel"></param>
+        /// <param name="dir"></param>
+        /// <param name="stepDuration">Duration of a step in Seconds </param>
+        private void stepMovePanel(Panel panel, Direction dir, int stepDuration = DEFAULT_STEP_DURATION)
+        {
+            // build command sequence
+            var cmd = (
+                (panel == Panel.Left) ?
+                    ((dir == Direction.Open) ? ArduinoSerial.OPEN_LEFT : ArduinoSerial.CLOSE_LEFT)
+                    : // else
+                    ((dir == Direction.Open) ? ArduinoSerial.OPEN_RIGHT : ArduinoSerial.CLOSE_RIGHT)
+                );
+
+            repeatCommand(cmd, stepDuration * 1000);
+
+        }
+
+
+        private void preOpenPanel(Panel panel)
+        {
+            // open a little bit until threshold            
+            stepMovePanel(panel, Direction.Open, DEFAULT_PRE_OPENING_DURATION * 1000);
+
+            _utils.WaitForMilliseconds(OnOpeningPauseDuring * 1000);
         }
 
         private void openPanel(Panel panel)
         {
-
+            // if a pre-opening has been defined AND the panel is currently closed, then pre-open it
             if (OnOpeningPauseAfter > 0)
             {
-                if (panel == Panel.Left && IsLeftPanelClosed())
+                if ((panel == Panel.Left) && IsLeftPanelClosed())
                 {
                     preOpenPanel(Panel.Left);
                 }
 
-                if (panel == Panel.Right && IsRightPanelClosed())
+                if ((panel == Panel.Right) && IsRightPanelClosed())
                 {
                     preOpenPanel(Panel.Right);
                 }
-
-
-                // pause a little for the belt to settle
-                _utils.WaitForMilliseconds(2000);
-
             }
 
             // continue with the opening
@@ -1044,7 +1047,6 @@ namespace ASCOM.AstroHaven
                 done = (panel == Panel.Left) ? IsLeftPanelClosed() : IsRightPanelClosed();
 
                 stepMovePanel(panel, Direction.Close); // full close
-
             }
 
             // unless the closure has been manually aborted, continue throwing commands to force the closure
@@ -1057,53 +1059,6 @@ namespace ASCOM.AstroHaven
             Abort = false; // reset
         }
 
-
-        /// <summary>
-        /// Moves the given panel by step in the given direction
-        /// </summary>
-        /// <param name="panel"></param>
-        /// <param name="dir"></param>
-        private void stepMovePanel(Panel panel, Direction dir, int stepDurationMsecs = 10)
-        {
-            // build command sequence
-            var cmd = (
-                (panel == Panel.Left) ?
-                    ((dir == Direction.Open) ? ArduinoSerial.COMMAND_OPEN_LEFT : ArduinoSerial.COMMAND_CLOSE_LEFT)
-                    : // else
-                    ((dir == Direction.Open) ? ArduinoSerial.COMMAND_OPEN_RIGHT : ArduinoSerial.COMMAND_CLOSE_RIGHT)
-                );
-
-            repeatCommand(cmd, stepDurationMsecs);
-
-        }
-
-
-        private void preOpenPanel(Panel panel)
-        {
-            // open a little bit until threshold            
-            var cmd = ((panel == Panel.Left) ? ArduinoSerial.COMMAND_OPEN_LEFT : ArduinoSerial.COMMAND_OPEN_RIGHT);
-
-            repeatCommand(cmd, OnOpeningPauseDuring * 1000);
-
-        }
-
-        private void repeatCommand(String cmd, int msecs)
-        {
-
-            if (msecs < MinDelayBtwnCommands)
-                msecs = MinDelayBtwnCommands;
-
-            DateTime end = DateTime.Now.AddMilliseconds(msecs);
-
-            Abort = false; // reset
-
-            while (!Abort && (DateTime.Now < end))
-            {
-                CommandBlind(cmd);
-            }
-
-            Abort = false; // reset
-        }
 
 
         #endregion

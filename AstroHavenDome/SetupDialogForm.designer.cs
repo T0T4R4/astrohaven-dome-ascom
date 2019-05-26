@@ -175,7 +175,6 @@ namespace ASCOM.AstroHaven
             // 
             // txtOnOpeningPauseAfter
             // 
-            this.txtOnOpeningPauseAfter.Enabled = false;
             this.txtOnOpeningPauseAfter.Location = new System.Drawing.Point(138, 162);
             this.txtOnOpeningPauseAfter.Name = "txtOnOpeningPauseAfter";
             this.txtOnOpeningPauseAfter.Size = new System.Drawing.Size(29, 20);
@@ -186,7 +185,6 @@ namespace ASCOM.AstroHaven
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Enabled = false;
             this.label5.Location = new System.Drawing.Point(11, 165);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(121, 13);
@@ -217,7 +215,6 @@ namespace ASCOM.AstroHaven
             // 
             // txtOnClosingOverfeedDuring
             // 
-            this.txtOnClosingOverfeedDuring.Enabled = false;
             this.txtOnClosingOverfeedDuring.Location = new System.Drawing.Point(166, 196);
             this.txtOnClosingOverfeedDuring.Name = "txtOnClosingOverfeedDuring";
             this.txtOnClosingOverfeedDuring.Size = new System.Drawing.Size(30, 20);
@@ -237,7 +234,6 @@ namespace ASCOM.AstroHaven
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Enabled = false;
             this.label8.Location = new System.Drawing.Point(174, 165);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(127, 13);
@@ -246,7 +242,6 @@ namespace ASCOM.AstroHaven
             // 
             // txtOnOpeningPauseDuring
             // 
-            this.txtOnOpeningPauseDuring.Enabled = false;
             this.txtOnOpeningPauseDuring.Location = new System.Drawing.Point(307, 162);
             this.txtOnOpeningPauseDuring.Name = "txtOnOpeningPauseDuring";
             this.txtOnOpeningPauseDuring.Size = new System.Drawing.Size(36, 20);
@@ -257,7 +252,6 @@ namespace ASCOM.AstroHaven
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Enabled = false;
             this.label10.Location = new System.Drawing.Point(349, 165);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(50, 13);
